@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<module>
+	<name>razorpay</name>
+	<displayName><![CDATA[Razorpay]]></displayName>
+	<version><![CDATA[1.1]]></version>
+	<description><![CDATA[Accept payments with Razorpay]]></description>
+	<author><![CDATA[]]></author>
+	<tab><![CDATA[payments_gateways]]></tab>
+	<is_configurable>1</is_configurable>
+	<need_instance>1</need_instance>
+	<limited_countries></limited_countries>
+</module>
