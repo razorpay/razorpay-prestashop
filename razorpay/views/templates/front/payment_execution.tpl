@@ -13,6 +13,7 @@
 <br/>
 <h4>
 <form action="{$return_url}" method="POST">
+  {literal}
   <script
     src="{$CheckoutUrl}"
     data-key="{$key_id}"
@@ -26,11 +27,13 @@
     data-prefill.contact="{$phone}"
     data-notes.prestashop_order_id="{$cart_order_id}">
   </script>
-    <input type="hidden" name="merchant_order_id" value="{$cart_order_id}"/> 
-
+  {/literal}
+  <input type="hidden" name="merchant_order_id" value="{$cart_order_id}"/> 
 </form>
 </h4>
 <br/><br/>
-    <p class="cart_navigation">
-        <a href="{$link->getPageLink('order', true, NULL, "step=3")}" class="button_large">{l s='Other payment methods' mod='checkout'}</a>
-    </p>
+<p class="cart_navigation">
+    <a href="{$link->getPageLink('order', true, NULL, "step=3")}" class="button_large">
+        {l s='Other payment methods' mod='checkout'}
+    </a>
+</p>
