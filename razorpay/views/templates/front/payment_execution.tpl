@@ -32,23 +32,7 @@
 </script>
 <p>
   <button id="btn-razorpay" onclick="razorpayCheckout.open();">Pay Now</button>
-  <button onclick="document.razorpayform.submit()">Cancel</button>
 </p>
-<!--
-<script
-  src="{$CheckoutUrl}"
-  data-key="{$key_id}"
-  data-amount="{$amount}"
-  data-currency="{$currency_code}"
-  data-name="{$name}"
-  data-description="Order # {$cart_order_id}"
-  data-netbanking="true"
-  data-prefill.name="{$card_holder_name}"
-  data-prefill.email="{$email}"
-  data-prefill.contact="{$phone}"
-  data-notes.prestashop_order_id="{$cart_order_id}">
-</script>
- -->
 </h4>
 <br/><br/>
 <p class="cart_navigation">
