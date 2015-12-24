@@ -11,7 +11,7 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
         $cart_id        = $_REQUEST['merchant_order_id'];
 
         $cart=new Cart($cart_id);
-        
+
         $razorpay = new razorpay();
 
         $amount = number_format($cart->getOrderTotal(true, 3), 2, '.', '')*100;
@@ -47,7 +47,7 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
                 $response_array = json_decode($result, true);
                 //Check success response
                 if($http_status === 200 and isset($response_array['error']) === false){
-                    $success = true;    
+                    $success = true;
                 }
                 else {
                     $success = false;
@@ -60,7 +60,7 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
                     }
                 }
             }
-                
+
             //close connection
             curl_close($ch);
         }
