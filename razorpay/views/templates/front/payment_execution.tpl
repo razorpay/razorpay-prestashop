@@ -12,24 +12,43 @@
 <h3> Click the Pay Now button below to process the payment.</h3>
 <br/>
 <h4>
-<form action="{$return_url}" method="POST">
-  {literal}
-  <script
-    src="{$CheckoutUrl}"
-    data-key="{$key_id}"
-    data-amount="{$amount}"
-    data-currency="{$currency_code}"
-    data-name="{$name}"
-    data-description="Order # {$cart_order_id}"
-    data-netbanking="true"
-    data-prefill.name="{$card_holder_name}"
-    data-prefill.email="{$email}"
-    data-prefill.contact="{$phone}"
-    data-notes.prestashop_order_id="{$cart_order_id}">
-  </script>
-  {/literal}
-  <input type="hidden" name="merchant_order_id" value="{$cart_order_id}"/> 
+<script src="{$checkout_url}"></script>
+<script>
+  var razorpayData = {$json};
+</script>
+<form name='razorpayform' action="{$return_url}" method="POST">
+  <input type="hidden" name="merchant_order_id" value="{$cart_id}">
+  <input type="hidden" name="razorpay_payment_id" id="razorpay_payment_id">
 </form>
+<script>
+  razorpayData.backdropClose = false;
+  razorpayData.handler = function(payment){
+    document.getElementById('razorpay_payment_id').value =
+      payment.razorpay_payment_id;
+    document.razorpayform.submit();
+  };
+  var razorpayCheckout = new Razorpay(razorpayData);
+  razorpayCheckout.open();
+</script>
+<p>
+  <button id="btn-razorpay" onclick="razorpayCheckout.open();">Pay Now</button>
+  <button onclick="document.razorpayform.submit()">Cancel</button>
+</p>
+<!--
+<script
+  src="{$CheckoutUrl}"
+  data-key="{$key_id}"
+  data-amount="{$amount}"
+  data-currency="{$currency_code}"
+  data-name="{$name}"
+  data-description="Order # {$cart_order_id}"
+  data-netbanking="true"
+  data-prefill.name="{$card_holder_name}"
+  data-prefill.email="{$email}"
+  data-prefill.contact="{$phone}"
+  data-notes.prestashop_order_id="{$cart_order_id}">
+</script>
+ -->
 </h4>
 <br/><br/>
 <p class="cart_navigation">

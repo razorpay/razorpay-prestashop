@@ -16,6 +16,7 @@ class razorpay extends PaymentModule
 
         if (isset($config['RAZORPAY_KEY_ID']))
             $this->KEY_ID = $config['RAZORPAY_KEY_ID'];
+
         if (isset($config['RAZORPAY_KEY_SECRET']))
             $this->KEY_SECRET = $config['RAZORPAY_KEY_SECRET'];
 
@@ -32,10 +33,10 @@ class razorpay extends PaymentModule
 
     function install()
     {
-//Call PaymentModule default install function
+        //Call PaymentModule default install function
         parent::install();
 
-//Create Payment Hooks
+        //Create Payment Hooks
         $this->registerHook('payment');
         $this->registerHook('paymentReturn');
 
@@ -85,7 +86,7 @@ class razorpay extends PaymentModule
         //Verify currencies and display payment form
         $cart_details = $cart->getSummaryDetails(null, true);
         $currencies = Currency::getCurrencies();
-        
+
         $order_currency = '';
 
         foreach ($currencies as $key => $currency) {
@@ -94,29 +95,33 @@ class razorpay extends PaymentModule
             }
         }
 
-        $CheckoutUrl        = 'https://checkout.razorpay.com/v1/checkout.js';
-        $key_id             = Configuration::get('RAZORPAY_KEY_ID');
-        $amount             = number_format($cart->getOrderTotal(true, 3), 2, '.', '')*100;
-        $cart_order_id      = $cart->id;
-        $email              = $customer->email;
-        
-        // Invoice Parameters
-        $card_holder_name       = $invoice->firstname . ' ' . $invoice->lastname;
-        $phone                  = $invoice->phone;
-        
-       $smarty->assign(array(
-            'CheckoutUrl'           => $CheckoutUrl,
-            'key_id'                   => $key_id,
-            'name'                  => Configuration::get('PS_SHOP_NAME'),
-            'amount'                 => $amount,
-            'cart_order_id'         => $cart_order_id,
-            'email'                 => $email,
-            'card_holder_name'  => $card_holder_name,
-            'phone'             => $phone,
-            'currency_code'     => $order_currency,
-            'total'       => $total,
-            'return_url'     => __PS_BASE_URI__."?fc=module&module=razorpay&controller=validation"));
+        $checkoutUrl = 'https://checkout.razorpay.com/v1/checkout.js';
+        $amount = number_format($cart->getOrderTotal(true, 3), 2, '.', '')*100;
 
+        $razorpay_args = array(
+          'key'         => Configuration::get('RAZORPAY_KEY_ID'),
+          'name'        => Configuration::get('PS_SHOP_NAME'),
+          'amount'      => $amount,
+          'currency'    => $order_currency,
+          'description' => "Order #" . $cart->id,
+          'prefill'     => array(
+            'name'      => $invoice->firstname . ' ' . $invoice->lastname,
+            'email'     => $customer->email,
+            'contact'   => $invoice->phone
+          ),
+          'notes'       => array(
+            'merchant_order_id' => $cart->id
+          )
+        );
+
+        $returnUrl = __PS_BASE_URI__."?fc=module&module=razorpay&controller=validation";
+
+        $smarty->assign(array(
+            'checkout_url'  => $checkoutUrl,
+            'return_url'    => $returnUrl,
+            'json' => json_encode($razorpay_args),
+            'cart_id' => $cart->id
+        ));
 
         return $this->display(__FILE__, 'payment_execution.tpl');
     }
@@ -173,7 +178,7 @@ class razorpay extends PaymentModule
             $this->KEY_ID= $_POST['KEY_ID'];
             $this->KEY_SECRET= $_POST['KEY_SECRET'];
         }
-        
+
         $ok = $this->l('Ok');
         $updated = $this->l('Settings Updated');
         $this->_html .= "<div class='conf confirm'><img src='../img/admin/ok.gif' alt='{$ok}' />{$updated}</div>";
