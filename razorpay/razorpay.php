@@ -12,13 +12,20 @@ class razorpay extends PaymentModule
         $this->tab = 'payments_gateways';
         $this->version = 1.1;
 
-        $config = Configuration::getMultiple(array('RAZORPAY_KEY_ID', 'RAZORPAY_KEY_SECRET'));
+        $config = Configuration::getMultiple(array(
+            'RAZORPAY_KEY_ID',
+            'RAZORPAY_KEY_SECRET',
+            'RAZORPAY_THEME_COLOR',
+        ));
 
         if (isset($config['RAZORPAY_KEY_ID']))
             $this->KEY_ID = $config['RAZORPAY_KEY_ID'];
 
         if (isset($config['RAZORPAY_KEY_SECRET']))
             $this->KEY_SECRET = $config['RAZORPAY_KEY_SECRET'];
+
+        if(isset($config['RAZORPAY_THEME_COLOR']))
+            $this->THEME_COLOR = $config['RAZORPAY_THEME_COLOR'];
 
         parent::__construct();
 
@@ -114,6 +121,11 @@ class razorpay extends PaymentModule
           )
         );
 
+        if($this->THEME_COLOR)
+        {
+            $razorpay_args['theme']['color'] = $this->THEME_COLOR;
+        }
+
         $returnUrl = __PS_BASE_URI__."?fc=module&module=razorpay&controller=validation";
 
         $smarty->assign(array(
@@ -175,8 +187,11 @@ class razorpay extends PaymentModule
         {
             Configuration::updateValue('RAZORPAY_KEY_ID', $_POST['KEY_ID']);
             Configuration::updateValue('RAZORPAY_KEY_SECRET', $_POST['KEY_SECRET']);
+            Configuration::updateValue('RAZORPAY_THEME_COLOR', $_POST['THEME_COLOR']);
+
             $this->KEY_ID= $_POST['KEY_ID'];
             $this->KEY_SECRET= $_POST['KEY_SECRET'];
+            $this->THEME_COLOR = $_POST['THEME_COLOR'];
         }
 
         $ok = $this->l('Ok');
@@ -214,7 +229,9 @@ class razorpay extends PaymentModule
         $modClientLabelKeyId      = $this->l('Razorpay Key Id');
         $modClientValueKeyId      = $this->KEY_ID;
         $modClientLabelKeySecret       = $this->l('Razorpay Key Secret');
+        $modClientLabelThemeColor       = $this->l('Theme Color');
         $modClientValueKeySecret       = $this->KEY_SECRET;
+        $modClientValueThemeColor       = $this->THEME_COLOR;
         $modUpdateSettings      = $this->l('Update settings');
         $this->_html .=
         "
@@ -239,6 +256,12 @@ class razorpay extends PaymentModule
                                         <td width='130'>{$modClientLabelKeySecret}</td>
                                         <td>
                                                 <input type='text' name='KEY_SECRET' value='{$modClientValueKeySecret}' style='width: 300px;' />
+                                        </td>
+                                </tr>
+                                <tr>
+                                        <td width='130'>{$modClientLabelThemeColor}</td>
+                                        <td>
+                                                <input type='color' name='THEME_COLOR' value='{$modClientValueThemeColor}' style='width: 300px;' />
                                         </td>
                                 </tr>
                                 <tr>
