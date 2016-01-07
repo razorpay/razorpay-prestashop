@@ -10,9 +10,9 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
         $razorpay_payment_id = $_REQUEST['razorpay_payment_id'];
         $cart_id        = $_REQUEST['merchant_order_id'];
 
-        $cart=new Cart($cart_id);
+        $cart = new Cart($cart_id);
 
-        $razorpay = new razorpay();
+        $razorpay = new Razorpay();
 
         $amount = number_format($cart->getOrderTotal(true, 3), 2, '.', '')*100;
 
@@ -56,7 +56,7 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
                         $error = $response_array['error']['code'].":".$response_array['error']['description'];
                     }
                     else {
-                        $error = "RAZORPAY_ERROR:Invalid Response <br/>".$result;
+                        $error = "RAZORPAY_ERROR: Invalid Response <br/>".$result;
                     }
                 }
             }
@@ -66,16 +66,26 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
         }
         catch (Exception $e) {
             $success = false;
-            $error ="PRESTASHOP_ERROR:Request to Razorpay Failed";
+            $error ="PRESTASHOP_ERROR: Request to Razorpay Failed";
         }
-        //Check the hash
+
         if ($success == true) {
             $customer = new Customer($cart->id_customer);
-            $total = (float)$cart->getOrderTotal(true, Cart::BOTH);
+            $total = (float) $cart->getOrderTotal(true, Cart::BOTH);
             $razorpay->validateOrder($cart_id, _PS_OS_PAYMENT_, $total, $razorpay->displayName,  '', array(), NULL, false, $customer->secure_key);
             $order = new Order($checkout->currentOrder);
             Logger::addLog("Payment Successful for Order#".$cart_id.". Razorpay payment id:".$razorpay_payment_id, 1);
-            Tools::redirect('index.php?controller=order-confirmation&id_cart='.(int)$cart->id.'&id_module='.(int)$this->module->id.'&id_order='.$razorpay->currentOrder);
+
+            $query = http_build_query(array(
+                'controller'    =>  'order-confirmation',
+                'id_cart'       =>  (int) $cart->id,
+                'id_module'     =>  (int) $this->module->id,
+                'id_order'      =>  $razorpay->currentOrder
+            ), '', '&');
+
+            $url = 'index.php?' . $query;
+
+            Tools::redirect($url);
         } else {
             Logger::addLog("Payment Failed for Order# ".$cart_id.". Razorpay payment id:".$razorpay_payment_id. "Error: ".$error, 4);
             echo 'Error! Please contact the seller directly for assistance.</br>';

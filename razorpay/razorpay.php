@@ -1,6 +1,6 @@
 <?php
 
-class razorpay extends PaymentModule
+class Razorpay extends PaymentModule
 {
     private $_html = '';
     private $_postErrors = array();
@@ -10,7 +10,7 @@ class razorpay extends PaymentModule
         $this->name = 'razorpay';
         $this->displayName = 'Razorpay';
         $this->tab = 'payments_gateways';
-        $this->version = 1.1;
+        $this->version = '1.2.0';
 
         $config = Configuration::getMultiple(array(
             'RAZORPAY_KEY_ID',
@@ -54,6 +54,7 @@ class razorpay extends PaymentModule
     {
         Configuration::deleteByName('RAZORPAY_KEY_ID');
         Configuration::deleteByName('RAZORPAY_KEY_SECRET');
+        Configuration::deleteByName('RAZORPAY_THEME_COLOR');
         parent::uninstall();
     }
 
