@@ -10,7 +10,9 @@ class Razorpay extends PaymentModule
         $this->name = 'razorpay';
         $this->displayName = 'Razorpay';
         $this->tab = 'payments_gateways';
-        $this->version = '1.2.0';
+        $this->version = '1.2.1';
+        $this->author = 'Team Razorpay';
+        $this->module_key = '084fe8aecafea8b2f84cca493377eb9b';
 
         $config = Configuration::getMultiple(array(
             'RAZORPAY_KEY_ID',
@@ -18,13 +20,13 @@ class Razorpay extends PaymentModule
             'RAZORPAY_THEME_COLOR',
         ));
 
-        if (isset($config['RAZORPAY_KEY_ID']))
+        if (Tools::getIsset($config['RAZORPAY_KEY_ID']))
             $this->KEY_ID = $config['RAZORPAY_KEY_ID'];
 
-        if (isset($config['RAZORPAY_KEY_SECRET']))
+        if (Tools::getIsset($config['RAZORPAY_KEY_SECRET']))
             $this->KEY_SECRET = $config['RAZORPAY_KEY_SECRET'];
 
-        if(isset($config['RAZORPAY_THEME_COLOR']))
+        if(Tools::getIsset($config['RAZORPAY_THEME_COLOR']))
             $this->THEME_COLOR = $config['RAZORPAY_THEME_COLOR'];
 
         parent::__construct();
@@ -33,12 +35,12 @@ class Razorpay extends PaymentModule
         $this->page = basename(__FILE__, '.php');
         $this->description = $this->l('Accept payments with Razorpay');
 
-        if (!isset($this->KEY_ID) OR !isset($this->KEY_SECRET))
+        if (!Tools::getIsset($this->KEY_ID) OR !Tools::getIsset($this->KEY_SECRET))
             $this->warning = $this->l('your Razorpay key must be configured in order to use this module correctly');
     }
 
 
-    function install()
+    public function install()
     {
         //Call PaymentModule default install function
         parent::install();
@@ -50,7 +52,7 @@ class Razorpay extends PaymentModule
     }
 
 
-    function uninstall()
+    public function uninstall()
     {
         Configuration::deleteByName('RAZORPAY_KEY_ID');
         Configuration::deleteByName('RAZORPAY_KEY_SECRET');
@@ -59,11 +61,11 @@ class Razorpay extends PaymentModule
     }
 
 
-    function getContent()
+    public function getContent()
     {
         $this->_html = '<h2>'.$this->displayName.'</h2>';
 
-        if (!empty($_POST))
+        if (!empty(Tools::getValue()))
         {
             $this->_postValidation();
             if (!sizeof($this->_postErrors))
@@ -83,21 +85,19 @@ class Razorpay extends PaymentModule
         return $this->_html;
     }
 
-    function execPayment($cart)
+    public function execPayment($cart)
     {
-        $delivery = new Address(intval($cart->id_address_delivery));
-        $invoice = new Address(intval($cart->id_address_invoice));
-        $customer = new Customer(intval($cart->id_customer));
+        $invoice = new Address((int) $cart->id_address_invoice);
+        $customer = new Customer((int) $cart->id_customer);
 
-        global $cookie, $smarty;
+        global $smarty;
 
         //Verify currencies and display payment form
-        $cart_details = $cart->getSummaryDetails(null, true);
         $currencies = Currency::getCurrencies();
 
         $order_currency = '';
 
-        foreach ($currencies as $key => $currency) {
+        foreach ($currencies as $currency) {
             if ($currency['id_currency'] == $cart->id_currency) {
                 $order_currency = $currency['iso_code'];
             }
@@ -132,7 +132,7 @@ class Razorpay extends PaymentModule
         $smarty->assign(array(
             'checkout_url'  => $checkoutUrl,
             'return_url'    => $returnUrl,
-            'json' => json_encode($razorpay_args),
+            'json' => Tools::jsonEncode($razorpay_args),
             'cart_id' => $cart->id
         ));
 
@@ -140,7 +140,7 @@ class Razorpay extends PaymentModule
     }
 
 
-    function hookPayment($params)
+    public function hookPayment($params)
     {
         global $smarty;
         $smarty->assign(array(
@@ -151,7 +151,7 @@ class Razorpay extends PaymentModule
     }
 
 
-    function hookPaymentReturn($params)
+    public function hookPaymentReturn($params)
     {
         global $smarty;
         $state = $params['objOrder']->getCurrentState();
@@ -170,12 +170,14 @@ class Razorpay extends PaymentModule
 
     private function _postValidation()
     {
-        if (isset($_POST['btnSubmit']))
+        if (Tools::getIsset(Tools::getValue('btnSubmit')))
         {
-            if (empty($_POST['KEY_ID']))
+            if (empty(Tools::getValue('KEY_ID'))) {
                 $this->_postErrors[] = $this->l('Your Key Id is required.');
-            if (empty($_POST['KEY_SECRET']))
+            }
+            if (empty(Tools::getValue('KEY_SECRET'))) {
                 $this->_postErrors[] = $this->l('Your Key Secret is required.');
+            }
         }
     }
 
@@ -184,15 +186,15 @@ class Razorpay extends PaymentModule
 
     private function _postProcess()
     {
-        if (isset($_POST['btnSubmit']))
+        if (Tools::getIsset(Tools::getValue('btnSubmit')))
         {
-            Configuration::updateValue('RAZORPAY_KEY_ID', $_POST['KEY_ID']);
-            Configuration::updateValue('RAZORPAY_KEY_SECRET', $_POST['KEY_SECRET']);
-            Configuration::updateValue('RAZORPAY_THEME_COLOR', $_POST['THEME_COLOR']);
+            Configuration::updateValue('RAZORPAY_KEY_ID', Tools::getValue('KEY_ID'));
+            Configuration::updateValue('RAZORPAY_KEY_SECRET', Tools::getValue('KEY_SECRET'));
+            Configuration::updateValue('RAZORPAY_THEME_COLOR', Tools::getValue('THEME_COLOR'));
 
-            $this->KEY_ID= $_POST['KEY_ID'];
-            $this->KEY_SECRET= $_POST['KEY_SECRET'];
-            $this->THEME_COLOR = $_POST['THEME_COLOR'];
+            $this->KEY_ID= Tools::getValue('KEY_ID');
+            $this->KEY_SECRET= Tools::getValue('KEY_SECRET');
+            $this->THEME_COLOR = Tools::getValue('THEME_COLOR');
         }
 
         $ok = $this->l('Ok');

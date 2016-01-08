@@ -29,6 +29,6 @@
 <p class='cart_navigation' style="margin:15px;">
   <a class="button_large" id="btn-razorpay" onclick="razorpayCheckout.open();">Pay Now</a>
   <a href="{$link->getPageLink('order', true, NULL, "step=3")}" class="button_large">
-        {l s='Other payment methods' mod='checkout'}
+        {l s='Other payment methods' mod='razorpay'}
     </a>
 </p>

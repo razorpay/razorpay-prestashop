@@ -44,7 +44,7 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
                 $error = 'Curl error: ' . curl_error($ch);
             }
             else {
-                $response_array = json_decode($result, true);
+                $response_array = Tools::jsonDecode($result, true);
                 //Check success response
                 if($http_status === 200 and isset($response_array['error']) === false){
                     $success = true;
@@ -73,7 +73,7 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
             $customer = new Customer($cart->id_customer);
             $total = (float) $cart->getOrderTotal(true, Cart::BOTH);
             $razorpay->validateOrder($cart_id, _PS_OS_PAYMENT_, $total, $razorpay->displayName,  '', array(), NULL, false, $customer->secure_key);
-            $order = new Order($checkout->currentOrder);
+
             Logger::addLog("Payment Successful for Order#".$cart_id.". Razorpay payment id:".$razorpay_payment_id, 1);
 
             $query = http_build_query(array(
