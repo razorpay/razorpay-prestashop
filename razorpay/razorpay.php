@@ -3,6 +3,9 @@
 class Razorpay extends PaymentModule
 {
     private $_html = '';
+    private $KEY_ID = null;
+    private $KEY_SECRET = null;
+
     private $_postErrors = array();
 
     public function __construct()
@@ -20,14 +23,20 @@ class Razorpay extends PaymentModule
             'RAZORPAY_THEME_COLOR',
         ));
 
-        if (Tools::getIsset($config['RAZORPAY_KEY_ID']))
+        if (array_key_exists('RAZORPAY_KEY_ID', $config))
+        {
             $this->KEY_ID = $config['RAZORPAY_KEY_ID'];
+        }
 
-        if (Tools::getIsset($config['RAZORPAY_KEY_SECRET']))
+        if (array_key_exists('RAZORPAY_KEY_SECRET', $config))
+        {
             $this->KEY_SECRET = $config['RAZORPAY_KEY_SECRET'];
+        }
 
-        if(Tools::getIsset($config['RAZORPAY_THEME_COLOR']))
+        if(array_key_exists('RAZORPAY_THEME_COLOR', $config))
+        {
             $this->THEME_COLOR = $config['RAZORPAY_THEME_COLOR'];
+        }
 
         parent::__construct();
 
@@ -35,7 +44,8 @@ class Razorpay extends PaymentModule
         $this->page = basename(__FILE__, '.php');
         $this->description = $this->l('Accept payments with Razorpay');
 
-        if (!Tools::getIsset($this->KEY_ID) OR !Tools::getIsset($this->KEY_SECRET))
+        // Both are set to NULL by default
+        if ($this->KEY_ID === null OR $this->KEY_SECRET === null)
             $this->warning = $this->l('your Razorpay key must be configured in order to use this module correctly');
     }
 
@@ -65,14 +75,21 @@ class Razorpay extends PaymentModule
     {
         $this->_html = '<h2>'.$this->displayName.'</h2>';
 
-        if (!empty(Tools::getValue()))
+        if (Tools::isSubmit('btnSubmit'))
         {
             $this->_postValidation();
-            if (!sizeof($this->_postErrors))
+
+            if (empty($this->_postErrors))
+            {
                 $this->_postProcess();
+            }
             else
+            {
                 foreach ($this->_postErrors AS $err)
-                    $this->_html .= "<div class='alert error'>{$err}</div>";
+                {
+                    $this->_html .= "<div class='alert error'>ERROR: {$err}</div>";
+                }
+            }
         }
         else
         {
@@ -170,23 +187,22 @@ class Razorpay extends PaymentModule
 
     private function _postValidation()
     {
-        if (Tools::getIsset(Tools::getValue('btnSubmit')))
+        if (Tools::isSubmit('btnSubmit'))
         {
-            if (empty(Tools::getValue('KEY_ID'))) {
+            if (empty(Tools::getValue('KEY_ID')))
+            {
                 $this->_postErrors[] = $this->l('Your Key Id is required.');
             }
-            if (empty(Tools::getValue('KEY_SECRET'))) {
+            if (empty(Tools::getValue('KEY_SECRET')))
+            {
                 $this->_postErrors[] = $this->l('Your Key Secret is required.');
             }
         }
     }
 
-
-
-
     private function _postProcess()
     {
-        if (Tools::getIsset(Tools::getValue('btnSubmit')))
+        if (Tools::isSubmit('btnSubmit'))
         {
             Configuration::updateValue('RAZORPAY_KEY_ID', Tools::getValue('KEY_ID'));
             Configuration::updateValue('RAZORPAY_KEY_SECRET', Tools::getValue('KEY_SECRET'));
@@ -211,15 +227,15 @@ class Razorpay extends PaymentModule
         $modStatus  = $this->l('Razorpay online payment service is the right solution for you if you are accepting payments in INR');
         $modconfirm = $this->l('');
         $this->_html .= "<img src='../modules/razorpay/logo.png' style='float:left; margin-right:15px;' />
-                                        <b>{$modDesc}</b>
-                                        <br />
-                                        <br />
-                                        {$modStatus}
-                                        <br />
-                                        {$modconfirm}
-                                        <br />
-                                        <br />
-                                        <br />";
+            <b>{$modDesc}</b>
+            <br />
+            <br />
+            {$modStatus}
+            <br />
+            {$modconfirm}
+            <br />
+            <br />
+            <br />";
     }
 
 
@@ -228,13 +244,16 @@ class Razorpay extends PaymentModule
     private function _displayForm()
     {
         $modrazorpay                = $this->l('Razorpay Setup');
-        $modrazorpayDesc        = $this->l('Please specify the Razorpay key id and key secret.');
+        $modrazorpayDesc        = $this->l('Please specify the Razorpay Key Id and Key Secret.');
+
         $modClientLabelKeyId      = $this->l('Razorpay Key Id');
-        $modClientValueKeyId      = $this->KEY_ID;
         $modClientLabelKeySecret       = $this->l('Razorpay Key Secret');
         $modClientLabelThemeColor       = $this->l('Theme Color');
+
+        $modClientValueKeyId      = $this->KEY_ID;
         $modClientValueKeySecret       = $this->KEY_SECRET;
         $modClientValueThemeColor       = $this->THEME_COLOR;
+
         $modUpdateSettings      = $this->l('Update settings');
         $this->_html .=
         "
