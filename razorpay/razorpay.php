@@ -189,11 +189,14 @@ class Razorpay extends PaymentModule
     {
         if (Tools::isSubmit('btnSubmit'))
         {
-            if (empty(Tools::getValue('KEY_ID')))
+            $keyId = Tools::getValue('KEY_ID');
+            $keySecret = Tools::getValue('KEY_SECRET');
+
+            if (empty($keyId))
             {
                 $this->_postErrors[] = $this->l('Your Key Id is required.');
             }
-            if (empty(Tools::getValue('KEY_SECRET')))
+            if (empty($keySecret))
             {
                 $this->_postErrors[] = $this->l('Your Key Secret is required.');
             }
