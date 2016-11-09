@@ -7,11 +7,12 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
 {
     public function postProcess()
     {
-
+        global $cookie;
+        
         $key_id            = Configuration::get('RAZORPAY_KEY_ID');
         $key_secret        = Configuration::get('RAZORPAY_KEY_SECRET');
         $razorpay_payment_id = $_REQUEST['razorpay_payment_id'];
-        $razorpay_order_id = $_REQUEST['razorpay_order_id'];
+        $razorpay_order_id = $cookie->razorpay_order_id;
         $razorpay_signature = $_REQUEST['razorpay_signature'];
         $cart_id        = $_REQUEST['merchant_order_id'];
 
