@@ -133,8 +133,8 @@ class Razorpay extends PaymentModule
         $razorpay_order = $api->order->create($data);
         
         // sessions have to work correctly - trying presta cookies
-        //global $cookie ;
-        //$cookie->razorpay_order_id = $razorpay_order['id'];
+        global $cookie ;
+        $cookie->razorpay_order_id = $razorpay_order['id'];
 
         $razorpay_args = array(
           'key'         => Configuration::get('RAZORPAY_KEY_ID'),
