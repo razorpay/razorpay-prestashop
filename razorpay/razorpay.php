@@ -1,5 +1,9 @@
 <?php
 
+require_once __DIR__.'/razorpay-sdk/Razorpay.php';
+use Razorpay\Api\Api;
+
+
 class Razorpay extends PaymentModule
 {
     private $_html = '';
@@ -123,6 +127,15 @@ class Razorpay extends PaymentModule
         $checkoutUrl = 'https://checkout.razorpay.com/v1/checkout.js';
         $amount = number_format($cart->getOrderTotal(true, 3), 2, '.', '')*100;
 
+        // Create order using Orders API right here
+        $api = new Api(Configuration::get('RAZORPAY_KEY_ID'), Configuration::get('RAZORPAY_KEY_SECRET'));
+        $data = $this->getOrderCreationData($cart->id, $amount, $order_currency);   
+        $razorpay_order = $api->order->create($data);
+        
+        // sessions have to work correctly - trying presta cookies
+        //global $cookie ;
+        //$cookie->razorpay_order_id = $razorpay_order['id'];
+
         $razorpay_args = array(
           'key'         => Configuration::get('RAZORPAY_KEY_ID'),
           'name'        => Configuration::get('PS_SHOP_NAME'),
@@ -136,7 +149,8 @@ class Razorpay extends PaymentModule
           ),
           'notes'       => array(
             'merchant_order_id' => $cart->id
-          )
+          ),
+          'order_id' => $razorpay_order['id']
         );
 
         if($this->THEME_COLOR)
@@ -154,6 +168,18 @@ class Razorpay extends PaymentModule
         ));
 
         return $this->display(__FILE__, 'payment_execution.tpl');
+    }
+
+    function getOrderCreationData($order_id, $amount, $order_currency)
+    {
+        $data = array(
+          'receipt' => $order_id,
+          'amount' => $amount,
+          'currency' => $order_currency,
+          'payment_capture' => 1
+        );
+
+        return $data;
     }
 
 
