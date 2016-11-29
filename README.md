@@ -10,6 +10,20 @@ This extension utilizes Razorpay API and provides seamless integration with Pres
 4. Click configuration and fill out your Razorpay Key Id and Key Secret (Can be found in Api Keys section of Razorpay Dashboard).
 5. Click Update Settings.
 
+Make sure that the directory is named `razorpay`. This is how your directory structure should look like:
+  
+```
+prestashop/
+  modules/
+    razorpay/
+      config.xml
+      controllers/
+      index.php
+      logo.png
+      razorpay.php
+      views/
+````
+
 ### Support
 
 Visit [https://razorpay.com](https://razorpay.com) for support requests or email contact@razorpay.com.
