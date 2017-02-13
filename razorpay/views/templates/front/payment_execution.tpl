@@ -11,17 +11,20 @@
 <br/>
 <script src="{$checkout_url}"></script>
 <script>
-  var razorpayData = {$json};
+  var razorpayData = {$json}; // razorpay_order_id has to be added here
 </script>
-<form name='razorpayform' action="{$return_url}" method="POST">
+<form name='razorpayform' id="razorpay-form" action="{$return_url}" method="POST">
   <input type="hidden" name="merchant_order_id" value="{$cart_id}">
   <input type="hidden" name="razorpay_payment_id" id="razorpay_payment_id">
+  <input type="hidden" name="razorpay_order_id" id="razorpay_order_id">
+  <input type="hidden" name="razorpay_signature" id="razorpay_signature">
 </form>
 <script>
   razorpayData.handler = function(payment){
-    document.getElementById('razorpay_payment_id').value =
-      payment.razorpay_payment_id;
-    document.razorpayform.submit();
+    document.getElementById('razorpay_payment_id').value = payment.razorpay_payment_id;
+    document.getElementById('razorpay_order_id').value = payment.razorpay_order_id;
+    document.getElementById('razorpay_signature').value = payment.razorpay_signature;
+    document.getElementById('razorpay-form').submit();
   };
   var razorpayCheckout = new Razorpay(razorpayData);
   razorpayCheckout.open();
