@@ -1,7 +1,6 @@
 <?php
 
 require_once __DIR__.'/../../razorpay-sdk/Razorpay.php';
-use Razorpay\Api\Api;
 
 class RazorpayValidationModuleFrontController extends ModuleFrontController
 {
@@ -26,7 +25,7 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
 
         $amount = number_format($cart->getOrderTotal(true, 3), 2, '.', '')*100;
 
-        $api = new Api($key_id, $key_secret);
+        $api = new \Razorpay\Api\Api($key_id, $key_secret);
 
         $success = false;
 

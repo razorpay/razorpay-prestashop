@@ -1,7 +1,6 @@
 <?php
 
 require_once __DIR__.'/razorpay-sdk/Razorpay.php';
-use Razorpay\Api\Api;
 
 class Razorpay extends PaymentModule
 {
@@ -124,7 +123,10 @@ class Razorpay extends PaymentModule
         $amount = number_format($cart->getOrderTotal(true, 3), 2, '.', '')*100;
 
         // Create order using Orders API right here
-        $api = new Api(Configuration::get('RAZORPAY_KEY_ID'), Configuration::get('RAZORPAY_KEY_SECRET'));
+        $keyId = Configuration::get('RAZORPAY_KEY_ID');
+        $keySecret = Configuration::get('RAZORPAY_KEY_SECRET');
+
+        $api = new \Razorpay\Api\Api($keyId, $keySecret);
 
         $data = $this->getOrderCreationData($cart->id, $amount, $order_currency);
         $razorpay_order = $api->order->create($data);
@@ -134,7 +136,7 @@ class Razorpay extends PaymentModule
         $cookie->razorpay_order_id = $razorpay_order['id'];
 
         $razorpay_args = array(
-          'key'         => Configuration::get('RAZORPAY_KEY_ID'),
+          'key'         => $keyId,
           'name'        => Configuration::get('PS_SHOP_NAME'),
           'amount'      => $amount,
           'currency'    => $order_currency,
