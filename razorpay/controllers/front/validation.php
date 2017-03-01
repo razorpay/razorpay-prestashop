@@ -26,8 +26,6 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
         $api = new Api($key_id, $key_secret);
 
         $success = false;
-        $error = "";
-        $captured = false;
 
         try
         {
