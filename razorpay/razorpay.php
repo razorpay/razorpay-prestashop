@@ -125,12 +125,12 @@ class Razorpay extends PaymentModule
 
         // Create order using Orders API right here
         $api = new Api(Configuration::get('RAZORPAY_KEY_ID'), Configuration::get('RAZORPAY_KEY_SECRET'));
+
         $data = $this->getOrderCreationData($cart->id, $amount, $order_currency);
         $razorpay_order = $api->order->create($data);
 
         // sessions have to work correctly - trying presta cookies
-
-        global $cookie;
+        global $cookie ;
         $cookie->razorpay_order_id = $razorpay_order['id'];
 
         $razorpay_args = array(

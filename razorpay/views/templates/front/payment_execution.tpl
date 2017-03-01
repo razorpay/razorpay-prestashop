@@ -11,7 +11,7 @@
 <br/>
 <script src="{$checkout_url}"></script>
 <script>
-  var razorpayData = {$json};
+  var razorpayData = {$json}; // razorpay_order_id has to be added here
 </script>
 <form name='razorpayform' id="razorpay-form" action="{$return_url}" method="POST">
   <input type="hidden" name="merchant_order_id" value="{$cart_id}">

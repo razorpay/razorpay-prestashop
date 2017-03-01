@@ -27,9 +27,8 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
 
         $success = false;
         $error = "";
+        $captured = false;
 
-
-        // Orders API to be implemented here
         try
         {
             $signature = hash_hmac('sha256', $razorpay_order_id . '|' . $razorpay_payment_id, $key_secret);
