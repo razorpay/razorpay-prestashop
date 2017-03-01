@@ -3,7 +3,6 @@
 require_once __DIR__.'/razorpay-sdk/Razorpay.php';
 use Razorpay\Api\Api;
 
-
 class Razorpay extends PaymentModule
 {
     private $_html = '';
@@ -53,7 +52,6 @@ class Razorpay extends PaymentModule
             $this->warning = $this->l('your Razorpay key must be configured in order to use this module correctly');
     }
 
-
     public function install()
     {
         //Call PaymentModule default install function
@@ -62,9 +60,7 @@ class Razorpay extends PaymentModule
         //Create Payment Hooks
         $this->registerHook('payment');
         $this->registerHook('paymentReturn');
-
     }
-
 
     public function uninstall()
     {
@@ -129,11 +125,12 @@ class Razorpay extends PaymentModule
 
         // Create order using Orders API right here
         $api = new Api(Configuration::get('RAZORPAY_KEY_ID'), Configuration::get('RAZORPAY_KEY_SECRET'));
-        $data = $this->getOrderCreationData($cart->id, $amount, $order_currency);   
+        $data = $this->getOrderCreationData($cart->id, $amount, $order_currency);
         $razorpay_order = $api->order->create($data);
-        
+
         // sessions have to work correctly - trying presta cookies
-        global $cookie ;
+
+        global $cookie;
         $cookie->razorpay_order_id = $razorpay_order['id'];
 
         $razorpay_args = array(
@@ -182,7 +179,6 @@ class Razorpay extends PaymentModule
         return $data;
     }
 
-
     public function hookPayment($params)
     {
         global $smarty;
@@ -192,7 +188,6 @@ class Razorpay extends PaymentModule
 
         return $this->display(__FILE__, 'payment.tpl');
     }
-
 
     public function hookPaymentReturn($params)
     {
@@ -209,7 +204,6 @@ class Razorpay extends PaymentModule
 
         return $this->display(__FILE__, 'payment_return.tpl');
     }
-
 
     private function _postValidation()
     {
@@ -247,9 +241,6 @@ class Razorpay extends PaymentModule
         $this->_html .= "<div class='conf confirm'><img src='../img/admin/ok.gif' alt='{$ok}' />{$updated}</div>";
     }
 
-
-
-
     private function _displayrazorpay()
     {
         $modDesc    = $this->l('This module allows you to accept payments using Razorpay.');
@@ -266,9 +257,6 @@ class Razorpay extends PaymentModule
             <br />
             <br />";
     }
-
-
-
 
     private function _displayForm()
     {

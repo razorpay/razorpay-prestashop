@@ -8,12 +8,13 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
     public function postProcess()
     {
         global $cookie;
-        
+
         $key_id            = Configuration::get('RAZORPAY_KEY_ID');
         $key_secret        = Configuration::get('RAZORPAY_KEY_SECRET');
         $razorpay_payment_id = $_REQUEST['razorpay_payment_id'];
         $razorpay_order_id = $cookie->razorpay_order_id;
         $razorpay_signature = $_REQUEST['razorpay_signature'];
+
         $cart_id        = $_REQUEST['merchant_order_id'];
 
         $cart = new Cart($cart_id);
@@ -26,21 +27,14 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
 
         $success = false;
         $error = "";
-        $captured = false;
 
 
         // Orders API to be implemented here
-        try 
+        try
         {
             $signature = hash_hmac('sha256', $razorpay_order_id . '|' . $razorpay_payment_id, $key_secret);
 
             if (hash_equals($signature , $razorpay_signature))
-            {
-                $captured = true;;
-            }
-        
-            //Check success response
-            if ($captured)
             {
                 $success = true;
             }
