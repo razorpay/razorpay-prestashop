@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__.'/../../razorpay-sdk/Razorpay.php';
+
 use Razorpay\Api\Api;
 
 class RazorpayValidationModuleFrontController extends ModuleFrontController
@@ -9,13 +10,12 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
     {
         global $cookie;
 
-        $key_id            = Configuration::get('RAZORPAY_KEY_ID');
-        $key_secret        = Configuration::get('RAZORPAY_KEY_SECRET');
-        $razorpay_payment_id = $_REQUEST['razorpay_payment_id'];
-        $razorpay_order_id = $cookie->razorpay_order_id;
-        $razorpay_signature = $_REQUEST['razorpay_signature'];
-
-        $cart_id        = $_REQUEST['merchant_order_id'];
+        $key_id                 = Configuration::get('RAZORPAY_KEY_ID');
+        $key_secret             = Configuration::get('RAZORPAY_KEY_SECRET');
+        $razorpay_payment_id    = $_POST['razorpay_payment_id'];
+        $razorpay_order_id      = $cookie->razorpay_order_id;
+        $razorpay_signature     = $_POST['razorpay_signature'];
+        $cart_id                = $_POST['merchant_order_id'];
 
         $cart = new Cart($cart_id);
 
@@ -25,30 +25,10 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
 
         $api = new Api($key_id, $key_secret);
 
-        $success = false;
+        $signature = hash_hmac('sha256', $razorpay_order_id . '|' . $razorpay_payment_id, $key_secret);
 
-        try
+        if (hash_equals($signature , $razorpay_signature))
         {
-            $signature = hash_hmac('sha256', $razorpay_order_id . '|' . $razorpay_payment_id, $key_secret);
-
-            if (hash_equals($signature , $razorpay_signature))
-            {
-                $success = true;
-            }
-
-            else
-            {
-                $success = false;
-
-                $error = "PAYMENT_ERROR = Payment failed";
-            }
-        }
-        catch (Exception $e) {
-            $success = false;
-            $error ="PRESTASHOP_ERROR: Request to Razorpay Failed";
-        }
-
-        if ($success == true) {
             $customer = new Customer($cart->id_customer);
             $total = (float) $cart->getOrderTotal(true, Cart::BOTH);
             $razorpay->validateOrder($cart_id, _PS_OS_PAYMENT_, $total, $razorpay->displayName,  '', array(), NULL, false, $customer->secure_key);
@@ -65,7 +45,10 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
             $url = 'index.php?' . $query;
 
             Tools::redirect($url);
-        } else {
+        }
+        else
+        {
+            $error      = "PAYMENT_ERROR: Payment failed";
             Logger::addLog("Payment Failed for Order# ".$cart_id.". Razorpay payment id:".$razorpay_payment_id. "Error: ".$error, 4);
             echo 'Error! Please contact the seller directly for assistance.</br>';
             echo 'Order Id: '.$cart_id.'</br>';
