@@ -129,7 +129,15 @@ class Razorpay extends PaymentModule
         $api = new \Razorpay\Api\Api($keyId, $keySecret);
 
         $data = $this->getOrderCreationData($cart->id, $amount, $order_currency);
-        $razorpay_order = $api->order->create($data);
+
+        try
+        {
+            $razorpay_order = $api->order->create($data);
+        }
+        catch (Exception $e)
+        {
+            echo 'Prestashop Error: ' . $e->getMessage();
+        }
 
         // sessions have to work correctly - trying presta cookies
         global $cookie ;
