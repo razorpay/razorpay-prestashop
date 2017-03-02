@@ -25,18 +25,20 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
 
         $amount = number_format($cart->getOrderTotal(true, 3), 2, '.', '')*100;
 
-        $api = new \Razorpay\Api\Api($key_id, $key_secret);
-
         $success = false;
 
-        try
+        // If success is false
+        $error = 'Payment Failed. Signature could not be validated';
+
+        try 
         {
+            $api = new \Razorpay\Api\Api($key_id, $key_secret);
+
             $success = $api->utility->verifyPaymentSignature($attributes);
         }
-        catch (Exception $e)
+        catch(Exception $e)
         {
-            $success = false;
-            $error = 'Payment Failed : ' . $e->getMessage();
+            $error = 'Prestashop Error : ' . $e->getMessage();
         }
 
         if ($success == true)
