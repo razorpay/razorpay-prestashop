@@ -27,19 +27,9 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
 
         $api = new \Razorpay\Api\Api($key_id, $key_secret);
 
-        $success = false;
+        $signature = hash_hmac('sha256', $razorpay_order_id . '|' . $razorpay_payment_id, $key_secret);
 
-        try
-        {
-            $success = $api->utility->verifyPaymentSignature($attributes);
-        }
-        catch (Exception $e)
-        {
-            $success = false;
-            $error = 'Payment Failed : ' . $e->getMessage();
-        }
-
-        if ($success == true)
+        if ($api->utility->verifyPaymentSignature($attributes))
         {
             $customer = new Customer($cart->id_customer);
             $total = (float) $cart->getOrderTotal(true, Cart::BOTH);
@@ -60,6 +50,7 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
         }
         else
         {
+            $error      = "PAYMENT_ERROR: Payment failed";
             Logger::addLog("Payment Failed for Order# ".$cart_id.". Razorpay payment id:".$razorpay_payment_id. "Error: ".$error, 4);
             echo 'Error! Please contact the seller directly for assistance.</br>';
             echo 'Order Id: '.$cart_id.'</br>';
