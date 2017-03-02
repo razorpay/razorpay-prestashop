@@ -2,20 +2,22 @@
 
 require_once __DIR__.'/../../razorpay-sdk/Razorpay.php';
 
-use Razorpay\Api\Api;
-
 class RazorpayValidationModuleFrontController extends ModuleFrontController
 {
     public function postProcess()
     {
         global $cookie;
 
-        $key_id                 = Configuration::get('RAZORPAY_KEY_ID');
-        $key_secret             = Configuration::get('RAZORPAY_KEY_SECRET');
-        $razorpay_payment_id    = $_POST['razorpay_payment_id'];
-        $razorpay_order_id      = $cookie->razorpay_order_id;
-        $razorpay_signature     = $_POST['razorpay_signature'];
-        $cart_id                = $_POST['merchant_order_id'];
+        $key_id            = Configuration::get('RAZORPAY_KEY_ID');
+        $key_secret        = Configuration::get('RAZORPAY_KEY_SECRET');
+
+        $attributes = [
+            'razorpay_payment_id' => $_REQUEST['razorpay_payment_id'],
+            'razorpay_order_id'   => $cookie->razorpay_order_id,
+            'razorpay_signature'  => $_REQUEST['razorpay_signature'],
+        ];
+
+        $cart_id        = $_REQUEST['merchant_order_id'];
 
         $cart = new Cart($cart_id);
 
@@ -23,11 +25,11 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
 
         $amount = number_format($cart->getOrderTotal(true, 3), 2, '.', '')*100;
 
-        $api = new Api($key_id, $key_secret);
+        $api = new \Razorpay\Api\Api($key_id, $key_secret);
 
         $signature = hash_hmac('sha256', $razorpay_order_id . '|' . $razorpay_payment_id, $key_secret);
 
-        if (hash_equals($signature , $razorpay_signature))
+        if ($api->utility->verifyPaymentSignature($attributes))
         {
             $customer = new Customer($cart->id_customer);
             $total = (float) $cart->getOrderTotal(true, Cart::BOTH);
