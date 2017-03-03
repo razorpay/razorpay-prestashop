@@ -134,6 +134,10 @@ class Razorpay extends PaymentModule
         {
             $razorpay_order = $api->order->create($data);
         }
+        catch (\Razorpay\Api\Errors $e)
+        {
+            echo 'Razorpay Error: ' . $e->getMessage();
+        }
         catch (Exception $e)
         {
             echo 'Prestashop Error: ' . $e->getMessage();
@@ -180,9 +184,9 @@ class Razorpay extends PaymentModule
     function getOrderCreationData($order_id, $amount, $order_currency)
     {
         $data = array(
-            'receipt' => $order_id,
-            'amount' => $amount,
-            'currency' => $order_currency,
+            'receipt'         => $order_id,
+            'amount'          => $amount,
+            'currency'        => $order_currency,
             'payment_capture' => 1
         );
 
