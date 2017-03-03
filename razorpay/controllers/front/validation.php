@@ -29,7 +29,16 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
 
         $api = new \Razorpay\Api\Api($key_id, $key_secret);
 
-        $success = $api->utility->verifyPaymentSignature($attributes);
+        $success = false;
+
+        try
+        {
+            $success = $api->utility->verifyPaymentSignature($attributes);
+        }
+        catch(Exception $e)
+        {
+            $error = 'Wordpress Error: ' . $e->getMessage();
+        }
 
         if ($success == true)
         {
@@ -52,7 +61,6 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
         }
         else
         {
-            $error = 'Payment Failed. Signature could not be validated';
             Logger::addLog("Payment Failed for Order# ".$cart_id.". Razorpay payment id:".$razorpay_payment_id. "Error: ".$error, 4);
             echo 'Error! Please contact the seller directly for assistance.</br>';
             echo 'Order Id: '.$cart_id.'</br>';
