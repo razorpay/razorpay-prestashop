@@ -29,14 +29,15 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
 
         $api = new \Razorpay\Api\Api($key_id, $key_secret);
 
-        $success = false;
+        $success = true;
 
         try
         {
-            $success = $api->utility->verifyPaymentSignature($attributes);
+            $api->utility->verifyPaymentSignature($attributes);
         }
         catch(\Razorpay\Api\Errors\SignatureVerificationError $e)
         {
+            $success = false;
             $error = 'Wordpress Error: Payment failed because signature verification error';
         }
 
