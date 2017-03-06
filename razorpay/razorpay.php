@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__.'/razorpay-sdk/Razorpay.php';
+
 class Razorpay extends PaymentModule
 {
     private $_html = '';
@@ -49,7 +51,6 @@ class Razorpay extends PaymentModule
             $this->warning = $this->l('your Razorpay key must be configured in order to use this module correctly');
     }
 
-
     public function install()
     {
         //Call PaymentModule default install function
@@ -58,9 +59,7 @@ class Razorpay extends PaymentModule
         //Create Payment Hooks
         $this->registerHook('payment');
         $this->registerHook('paymentReturn');
-
     }
-
 
     public function uninstall()
     {
@@ -123,8 +122,33 @@ class Razorpay extends PaymentModule
         $checkoutUrl = 'https://checkout.razorpay.com/v1/checkout.js';
         $amount = number_format($cart->getOrderTotal(true, 3), 2, '.', '')*100;
 
+        // Create order using Orders API right here
+        $keyId = Configuration::get('RAZORPAY_KEY_ID');
+        $keySecret = Configuration::get('RAZORPAY_KEY_SECRET');
+
+        $api = new \Razorpay\Api\Api($keyId, $keySecret);
+
+        $data = $this->getOrderCreationData($cart->id, $amount, $order_currency);
+
+        try
+        {
+            $razorpay_order = $api->order->create($data);
+        }
+        catch (\Razorpay\Api\Errors $e)
+        {
+            echo 'Razorpay Error: ' . $e->getMessage();
+        }
+        catch (Exception $e)
+        {
+            echo 'Prestashop Error: ' . $e->getMessage();
+        }
+
+        // sessions have to work correctly - trying presta cookies
+        global $cookie ;
+        $cookie->razorpay_order_id = $razorpay_order['id'];
+
         $razorpay_args = array(
-          'key'         => Configuration::get('RAZORPAY_KEY_ID'),
+          'key'         => $keyId,
           'name'        => Configuration::get('PS_SHOP_NAME'),
           'amount'      => $amount,
           'currency'    => $order_currency,
@@ -136,7 +160,8 @@ class Razorpay extends PaymentModule
           ),
           'notes'       => array(
             'merchant_order_id' => $cart->id
-          )
+          ),
+          'order_id' => $razorpay_order['id']
         );
 
         if($this->THEME_COLOR)
@@ -156,6 +181,17 @@ class Razorpay extends PaymentModule
         return $this->display(__FILE__, 'payment_execution.tpl');
     }
 
+    function getOrderCreationData($order_id, $amount, $order_currency)
+    {
+        $data = array(
+            'receipt'         => $order_id,
+            'amount'          => $amount,
+            'currency'        => $order_currency,
+            'payment_capture' => 1
+        );
+
+        return $data;
+    }
 
     public function hookPayment($params)
     {
@@ -166,7 +202,6 @@ class Razorpay extends PaymentModule
 
         return $this->display(__FILE__, 'payment.tpl');
     }
-
 
     public function hookPaymentReturn($params)
     {
@@ -183,7 +218,6 @@ class Razorpay extends PaymentModule
 
         return $this->display(__FILE__, 'payment_return.tpl');
     }
-
 
     private function _postValidation()
     {
@@ -221,9 +255,6 @@ class Razorpay extends PaymentModule
         $this->_html .= "<div class='conf confirm'><img src='../img/admin/ok.gif' alt='{$ok}' />{$updated}</div>";
     }
 
-
-
-
     private function _displayrazorpay()
     {
         $modDesc    = $this->l('This module allows you to accept payments using Razorpay.');
@@ -240,9 +271,6 @@ class Razorpay extends PaymentModule
             <br />
             <br />";
     }
-
-
-
 
     private function _displayForm()
     {
