@@ -8,16 +8,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [2.0.0] - 2017-08-08
 
 ### Added
-- Support for Prestashop 1.7.1.2
+- Support for Prestashop 1.7.x
 - No redirect mode
 
 ### Changed
 - Orders are not created for payments in this release
 - Notes and description does not include Order Id
-- Shifts to Razorpay SDK instead of Curl
+- Shifts to Razorpay SDK instead of curl
 
 ### Removed
-- Support for Prestashop < 1.7.1.2
+- Support for Prestashop 1.6.x
 - Support for PHP < 5.6.0
 - Theme support. Please use the Razorpay Dashboard for configuring the theme color.
 
