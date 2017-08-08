@@ -2,6 +2,8 @@
 
 require_once __DIR__.'/../../razorpay-sdk/Razorpay.php';
 
+use Razorpay\Api\Api;
+
 class RazorpayValidationModuleFrontController extends ModuleFrontController
 {
     public function postProcess()
@@ -11,62 +13,119 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
         $key_id            = Configuration::get('RAZORPAY_KEY_ID');
         $key_secret        = Configuration::get('RAZORPAY_KEY_SECRET');
 
-        $attributes = [
-            'razorpay_payment_id' => $_REQUEST['razorpay_payment_id'],
-            'razorpay_order_id'   => $cookie->razorpay_order_id,
-            'razorpay_signature'  => $_REQUEST['razorpay_signature'],
-        ];
+        $paymentId = $_REQUEST['razorpay_payment_id'];
 
-        $cart_id        = $_REQUEST['merchant_order_id'];
+        $cart = $this->context->cart;
 
-        $cart = new Cart($cart_id);
+        if (($cart->id_customer === 0) or
+            ($cart->id_address_delivery === 0) or
+            ($cart->id_address_invoice === 0) or
+            (!$this->module->active))
+        {
+            Tools::redirect('index.php?controller=order&step=1');
+        }
 
-        $razorpay = new Razorpay();
+        $authorized = false;
 
-        $amount = number_format($cart->getOrderTotal(true, 3), 2, '.', '')*100;
+        // Edge case when payment method is disabled while payment in progress
+        foreach (Module::getPaymentModules() as $module)
+        {
+            if ($module['name'] == 'razorpay')
+            {
+                $authorized = true;
+                break;
+            }
+        }
+        if (!$authorized)
+        {
+            die($this->module->getTranslator()->trans('This payment method is not available.', array(), 'Modules.Razorpay.Shop'));
+        }
 
-        $success = false;
+        $customer = new Customer($cart->id_customer);
 
-        $api = new \Razorpay\Api\Api($key_id, $key_secret);
+        if (!Validate::isLoadedObject($customer))
+        {
+            Tools::redirect('index.php?controller=order&step=1');
+        }
 
-        $success = true;
+        $currency = $this->context->currency;
+
+        $total = (string) intval($cart->getOrderTotal(true, Cart::BOTH) * 100);
+
+        $api = new Api($key_id, $key_secret);
+
+        $api->setAppDetails('Prestashop', $this->module->version);
 
         try
         {
-            $api->utility->verifyPaymentSignature($attributes);
-        }
-        catch(\Razorpay\Api\Errors\SignatureVerificationError $e)
-        {
-            $success = false;
-            $error = 'Wordpress Error: Payment failed because signature verification error';
-        }
+            $payment = $api->payment->fetch($paymentId);
 
-        if ($success == true)
-        {
+            $payment->capture(['amount' => $total]);
+
             $customer = new Customer($cart->id_customer);
-            $total = (float) $cart->getOrderTotal(true, Cart::BOTH);
-            $razorpay->validateOrder($cart_id, _PS_OS_PAYMENT_, $total, $razorpay->displayName,  '', array(), NULL, false, $customer->secure_key);
 
-            Logger::addLog("Payment Successful for Order#".$cart_id.". Razorpay payment id:".$razorpay_payment_id, 1);
+            /**
+             * Validate an order in database
+             * Function called from a payment module
+             *
+             * @param int     $id_cart
+             * @param int     $id_order_state
+             * @param float   $amount_paid       Amount really paid by customer (in the default currency)
+             * @param string  $payment_method    Payment method (eg. 'Credit card')
+             * @param null    $message           Message to attach to order
+             * @param array   $extra_vars
+             * @param null    $currency_special
+             * @param bool    $dont_touch_amount
+             * @param bool    $secure_key
+             * @param Shop    $shop
+             *
+             * @return bool
+             * @throws PrestaShopException
+             */
+            $extraData = array(
+                'transaction_id'    =>  $payment->id,
+            );
 
-            $query = http_build_query(array(
-                'controller'    =>  'order-confirmation',
-                'id_cart'       =>  (int) $cart->id,
-                'id_module'     =>  (int) $this->module->id,
-                'id_order'      =>  $razorpay->currentOrder
-            ), '', '&');
+            // So netbanking becomes razorpay.netbanking
+            $method = "razorpay.{$payment->method}";
+
+            $ret = $this->module->validateOrder(
+                $cart->id,
+                (int) Configuration::get('PS_OS_PAYMENT'),
+                $cart->getOrderTotal(true, Cart::BOTH),
+                $method,
+                'Payment by Razorpay using ' . $payment->method,
+                $extraData,
+                NULL,
+                false,
+                $customer->secure_key
+            );
+
+            Logger::addLog("Payment Successful for Order#".$cart->id.". Razorpay payment id: ".$paymentId . "Ret=" . (int)$ret, 1);
+
+            $query = http_build_query([
+                'controller'    => 'order-confirmation',
+                'id_cart'       => (int) $cart->id,
+                'id_module'     => (int) $this->module->id,
+                'id_order'      => $this->module->currentOrder,
+                'key'           => $customer->secure_key,
+            ], '', '&');
 
             $url = 'index.php?' . $query;
 
             Tools::redirect($url);
         }
-        else
+        catch(\Razorpay\Api\Errors\BadRequestError $e)
         {
-            Logger::addLog("Payment Failed for Order# ".$cart_id.". Razorpay payment id:".$razorpay_payment_id. "Error: ".$error, 4);
+            $error = $e->getMessage();
+            Logger::addLog("Payment Failed for Order# ".$cart->id.". Razorpay payment id: ".$paymentId. "Error: ". $error, 4);
+
             echo 'Error! Please contact the seller directly for assistance.</br>';
-            echo 'Order Id: '.$cart_id.'</br>';
-            echo 'Razorpay Payment Id: '.$razorpay_payment_id.'</br>';
+            echo 'Order Id: '.$cart->id.'</br>';
+            echo 'Razorpay Payment Id: '.$paymentId.'</br>';
             echo 'Error: '.$error.'</br>';
+
+            exit;
         }
     }
 }
