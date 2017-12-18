@@ -1,7 +1,5 @@
 <?php
 
-require_once __DIR__.'/razorpay-webhook.php'; 
-
 use PrestaShop\PrestaShop\Core\Payment\PaymentOption;
 use PrestaShop\PrestaShop\Adapter\Cart\CartPresenter;
 use Razorpay\Api\Api;
@@ -115,6 +113,11 @@ class Razorpay extends PaymentModule
         $modWebhookSecret = $this->WEBHOOK_SECRET;
         $modEnableWebhookLabel = $this->l('Enable Webhook');
         $modWebhookSecretLabel = $this->l('Webhook Secret');
+
+        $webhookUrl = __PS_BASE_URI__.'module/razorpay/webhook';
+
+        $modWebhookDescription = $this->l('Enable Razorpay Webhook at https://dashboard.razorpay.com/#/app/webhooks with the URL '. $webhookUrl);
+        $modWebhookSecretDescription = $this->l('Webhook secret is used for webhook signature verification. This has to match the one added at https://dashboard.razorpay.com/#/app/webhooks');
         
         $this->_html .=
         "
@@ -142,18 +145,18 @@ class Razorpay extends PaymentModule
                                         </td>
                                 </tr>
                                 <tr>
-                                        <td width='130'>{$modEnableWebhookLabel}</td>
+                                        <td width='130' title='{$modWebhookDescription}'>{$modEnableWebhookLabel}</td>
                                         <td>
                                                 <input type='checkbox' name='ENABLE_WEBHOOK' style='width: 300px;' {$modEnableWebhook} />
                                         </td>
                                 </tr>
                                 <tr>
-                                        <td width='130'>{$modWebhookSecretLabel}</td>
+                                        <td width='130' title='{$modWebhookSecretDescription}'>{$modWebhookSecretLabel}</td>
                                         <td>
                                                 <input type='text' name='WEBHOOK_SECRET' value='{$modWebhookSecret}' style='width: 300px;'/>
                                         </td>
                                 </tr>
-                                 <tr>
+                                <tr>
                                         <td colspan='2' align='center'>
                                                 <input class='button' name='btnSubmit' value='{$modUpdateSettings}' type='submit' />
                                         </td>

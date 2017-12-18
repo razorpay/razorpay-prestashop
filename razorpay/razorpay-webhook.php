@@ -45,10 +45,19 @@ class RZP_Webhook
      * - Secret isn't setup
      * - Event not recognized
      */
-    public function process(array $data)
+    public function process()
     {
+        $post = file_get_contents('php://input');
+
+        $data = json_decode($post, true);
+
+        if (json_last_error() !== 0)
+        {
+            return;
+        }
 
         $enabled = Configuration::get('ENABLE_RAZORPAY_WEBHOOK');
+
         if (($enabled === 'on') and
             (empty($data['event']) === false))
         {
@@ -130,7 +139,7 @@ class RZP_Webhook
          // We don't process subscription/invoice payments here
         if (isset($data['payload']['payment']['entity']['invoice_id']) === true)
         {
-            return;
+            exit;
         }
 
         //reference_no (ps order id) should be passed in payload
@@ -138,11 +147,20 @@ class RZP_Webhook
     
         $order = new Order($orderId);
 
-          // If payment is already done, ignore the event
+        if(empty($order->id_cart))
+        {
+            exit;
+        }
+
+        // If payment is already done, ignore the event
         if ($order->getCurrentOrderState()->paid === '1')
         {
             exit;
         }
+
+        $razorpayPaymentId = $data['payload']['payment']['entity']['id'];
+
+        $payment = $this->getPaymentEntity($razorpayPaymentId, $data);
 
         try
         {
@@ -151,9 +169,10 @@ class RZP_Webhook
         catch (Exception $e)
         {
             $error = $e->getMessage();
-            Logger::addLog("Payment Failed for Order# ".$order->id_cart. "Error: ". $error, 4);
+            Logger::addLog("Payment Failed for Order# ".$order->id_cart.". Razorpay payment id: ".$payment->id. "Error: ". $error, 4);
 
             echo 'Order Id: '.$order->id_cart.'</br>';
+            echo 'Razorpay Payment Id: '.$payment->id.'</br>';
             echo 'Error: '.$error.'</br>';
 
             exit;
@@ -161,6 +180,28 @@ class RZP_Webhook
 
         // Graceful exit since payment is now processed.
         exit;
+    }
+
+    protected function getPaymentEntity($razorpayPaymentId, $data)
+    {
+        try
+        {
+            $payment = $this->api->payment->fetch('pay_9DatWmAvREZZyI');
+        }
+        catch (Exception $e)
+        {
+            $log = array(
+                'message'         => $e->getMessage(),
+                'payment_id'      => $razorpayPaymentId,
+                'event'           => $data['event']
+            );
+
+            error_log(json_encode($log));
+
+            exit;
+        }
+
+        return $payment;
     }
 
 }
