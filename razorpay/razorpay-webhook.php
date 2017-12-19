@@ -147,13 +147,15 @@ class RZP_Webhook
     
         $order = new Order($orderId);
 
+        // If no cart associated with the order, ignore the event
         if(empty($order->id_cart))
         {
             exit;
         }
 
         // If payment is already done, ignore the event
-        if ($order->getCurrentOrderState()->paid === '1')
+        $payments = $order->getOrderPayments();
+        if (count($payments) >= 1)
         {
             exit;
         }
@@ -182,11 +184,12 @@ class RZP_Webhook
         exit;
     }
 
+    //Get razorpay payment entity 
     protected function getPaymentEntity($razorpayPaymentId, $data)
     {
         try
         {
-            $payment = $this->api->payment->fetch('pay_9DatWmAvREZZyI');
+            $payment = $this->api->payment->fetch($razorpayPaymentId);
         }
         catch (Exception $e)
         {
