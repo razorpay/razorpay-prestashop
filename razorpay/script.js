@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function(event) {
     var customer = prestashop.customer;
     options = {
       name: prestashop.shop.name,
-      amount: defaults.cart.totals.total.amount * 100,
+      amount: Math.round(defaults.cart.totals.total.amount * 100),
       description: defaults.description,
       name: defaults.name,
       key: defaults.key,
