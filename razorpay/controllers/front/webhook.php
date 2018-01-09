@@ -9,16 +9,17 @@ class RazorpayWebhookModuleFrontController extends ModuleFrontController
 {
     public function postProcess()
     {
+        $rzpWebhook = new RZP_Webhook();
+
         try
         {
-            $rzpWebhook = new RZP_Webhook();
             $rzpWebhook->process();
         }
         catch(\Razorpay\Api\Errors\BadRequestError $e)
         {
             $error = $e->getMessage();
 
-            echo 'Error: '.$error.'</br>';
+            Logger::addLog("Error: ". $error, 4);
 
             exit;
         }

@@ -23,9 +23,9 @@ class RZP_Webhook
     /**
      * Event constants
      */
-    const PAYMENT_AUTHORIZED = 'payment.authorized';
-    const PAYMENT_FAILED     = 'payment.failed';
-    const ORDER_PAID = 'order.paid';
+    const PAYMENT_AUTHORIZED    = 'payment.authorized';
+    const PAYMENT_FAILED        = 'payment.failed';
+    const ORDER_PAID            = 'order.paid';
 
     function __construct()
     {
@@ -83,33 +83,30 @@ class RZP_Webhook
                             'event'     => 'razorpay.wc.signature.verify_failed'
                         );
 
-                        error_log(json_encode($log));
+                        Logger::addLog("Error: ". json_encode($log), 4);
+
                         return;
                     }
 
-                }
-                else
-                {
-                    return;
+                    switch ($data['event'])
+                    {
+                        case self::PAYMENT_AUTHORIZED:
+                            return $this->paymentAuthorized($data);
+
+                        case self::PAYMENT_FAILED:
+                            return $this->paymentFailed($data);
+
+                        case self::ORDER_PAID:
+                            return $this->orderPaid($data);
+
+                        default:
+                            return;
+                    }
+
                 }
             }
-                
-            switch ($data['event'])
-            {
-                case self::PAYMENT_AUTHORIZED:
-                    return $this->paymentAuthorized($data);
-
-                case self::PAYMENT_FAILED:
-                    return $this->paymentFailed($data);
-
-                case self::ORDER_PAID:
-                    return $this->orderPaid($data);
-
-                default:
-                    return;
-            }
+            
         }
-        exit;
     }
 
     /**
@@ -136,12 +133,6 @@ class RZP_Webhook
      */
     protected function orderPaid(array $data)
     {
-         // We don't process subscription/invoice payments here
-        if (isset($data['payload']['payment']['entity']['invoice_id']) === true)
-        {
-            exit;
-        }
-
         //reference_no (ps order id) should be passed in payload
         $orderId = $data['payload']['payment']['entity']['notes']['reference_no'];
     
@@ -155,14 +146,13 @@ class RZP_Webhook
 
         // If payment is already done, ignore the event
         $payments = $order->getOrderPayments();
+
         if (count($payments) >= 1)
         {
             exit;
         }
 
         $razorpayPaymentId = $data['payload']['payment']['entity']['id'];
-
-        $payment = $this->getPaymentEntity($razorpayPaymentId, $data);
 
         try
         {
@@ -171,10 +161,11 @@ class RZP_Webhook
         catch (Exception $e)
         {
             $error = $e->getMessage();
-            Logger::addLog("Payment Failed for Order# ".$order->id_cart.". Razorpay payment id: ".$payment->id. "Error: ". $error, 4);
+
+            Logger::addLog("Payment Failed for Order# ".$order->id_cart.". Razorpay payment id: ".$razorpayPaymentId. "Error: ". $error, 1);
 
             echo 'Order Id: '.$order->id_cart.'</br>';
-            echo 'Razorpay Payment Id: '.$payment->id.'</br>';
+            echo 'Razorpay Payment Id: '.$razorpayPaymentId.'</br>';
             echo 'Error: '.$error.'</br>';
 
             exit;
@@ -183,28 +174,4 @@ class RZP_Webhook
         // Graceful exit since payment is now processed.
         exit;
     }
-
-    //Get razorpay payment entity 
-    protected function getPaymentEntity($razorpayPaymentId, $data)
-    {
-        try
-        {
-            $payment = $this->api->payment->fetch($razorpayPaymentId);
-        }
-        catch (Exception $e)
-        {
-            $log = array(
-                'message'         => $e->getMessage(),
-                'payment_id'      => $razorpayPaymentId,
-                'event'           => $data['event']
-            );
-
-            error_log(json_encode($log));
-
-            exit;
-        }
-
-        return $payment;
-    }
-
 }
