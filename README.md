@@ -14,4 +14,4 @@ Please visit the [Releases](https://github.com/razorpay/razorpay-prestashop/rele
 
 ### Support
 
-Visit [https://razorpay.com](https://razorpay.com) for support requests or email <support@razorpay.com>.
+Visit [our support page](https://razorpay.com/support) for support requests.
