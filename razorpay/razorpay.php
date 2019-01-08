@@ -2,6 +2,7 @@
 
 use PrestaShop\PrestaShop\Core\Payment\PaymentOption;
 use PrestaShop\PrestaShop\Adapter\Cart\CartPresenter;
+use Razorpay\Api\Api;
 
 class Razorpay extends PaymentModule
 {
@@ -9,6 +10,8 @@ class Razorpay extends PaymentModule
     private $_html = '';
     private $KEY_ID = null;
     private $KEY_SECRET = null;
+    public $ENABLE_WEBHOOK = null;
+    public $WEBHOOK_SECRET = null;
 
     private $_postErrors = [];
 
@@ -31,6 +34,8 @@ class Razorpay extends PaymentModule
         $config = Configuration::getMultiple([
             'RAZORPAY_KEY_ID',
             'RAZORPAY_KEY_SECRET',
+            'ENABLE_RAZORPAY_WEBHOOK',
+            'RAZORPAY_WEBHOOK_SECRET'
         ]);
 
         if (array_key_exists('RAZORPAY_KEY_ID', $config))
@@ -41,6 +46,16 @@ class Razorpay extends PaymentModule
         if (array_key_exists('RAZORPAY_KEY_SECRET', $config))
         {
             $this->KEY_SECRET = $config['RAZORPAY_KEY_SECRET'];
+        }
+
+        if (array_key_exists('ENABLE_RAZORPAY_WEBHOOK', $config))
+        {
+            $this->ENABLE_WEBHOOK = $config['ENABLE_RAZORPAY_WEBHOOK'];
+        }
+
+        if (array_key_exists('RAZORPAY_WEBHOOK_SECRET', $config))
+        {
+            $this->WEBHOOK_SECRET = $config['RAZORPAY_WEBHOOK_SECRET'];
         }
 
         parent::__construct();
@@ -55,7 +70,6 @@ class Razorpay extends PaymentModule
             $this->warning = $this->l('your Razorpay key must be configured in order to use this module correctly');
         }
     }
-
 
     public function getContent()
     {
@@ -79,8 +93,10 @@ class Razorpay extends PaymentModule
         {
             $this->_html .= "<br />";
         }
+
         $this->_displayrazorpay();
         $this->_displayForm();
+
         return $this->_html;
     }
 
@@ -93,6 +109,16 @@ class Razorpay extends PaymentModule
         $modClientValueKeyId      = $this->KEY_ID;
         $modClientValueKeySecret       = $this->KEY_SECRET;
         $modUpdateSettings      = $this->l('Update settings');
+        $modEnableWebhook = ($this->ENABLE_WEBHOOK  === 'on') ? 'checked' : '';
+        $modWebhookSecret = $this->WEBHOOK_SECRET;
+        $modEnableWebhookLabel = $this->l('Enable Webhook');
+        $modWebhookSecretLabel = $this->l('Webhook Secret');
+
+        $webhookUrl = __PS_BASE_URI__.'module/razorpay/webhook';
+
+        $modWebhookDescription = $this->l('Enable Razorpay Webhook at https://dashboard.razorpay.com/#/app/webhooks with the URL '. $webhookUrl);
+        $modWebhookSecretDescription = $this->l('Webhook secret is used for webhook signature verification. This has to match the one added at https://dashboard.razorpay.com/#/app/webhooks');
+        
         $this->_html .=
         "
         <br />
@@ -116,6 +142,18 @@ class Razorpay extends PaymentModule
                                         <td width='130'>{$modClientLabelKeySecret}</td>
                                         <td>
                                                 <input type='text' name='KEY_SECRET' value='{$modClientValueKeySecret}' style='width: 300px;' />
+                                        </td>
+                                </tr>
+                                <tr>
+                                        <td width='130' title='{$modWebhookDescription}'>{$modEnableWebhookLabel}</td>
+                                        <td>
+                                                <input type='checkbox' name='ENABLE_WEBHOOK' style='width: 300px;' {$modEnableWebhook} />
+                                        </td>
+                                </tr>
+                                <tr>
+                                        <td width='130' title='{$modWebhookSecretDescription}'>{$modWebhookSecretLabel}</td>
+                                        <td>
+                                                <input type='text' name='WEBHOOK_SECRET' value='{$modWebhookSecret}' style='width: 300px;'/>
                                         </td>
                                 </tr>
                                 <tr>
@@ -200,6 +238,8 @@ class Razorpay extends PaymentModule
     {
         Configuration::deleteByName('RAZORPAY_KEY_ID');
         Configuration::deleteByName('RAZORPAY_KEY_SECRET');
+        Configuration::deleteByName('ENABLE_RAZORPAY_WEBHOOK');
+        Configuration::deleteByName('RAZORPAY_WEBHOOK_SECRET');
 
         return parent::uninstall();
     }
@@ -280,9 +320,13 @@ class Razorpay extends PaymentModule
         {
             Configuration::updateValue('RAZORPAY_KEY_ID', Tools::getValue('KEY_ID'));
             Configuration::updateValue('RAZORPAY_KEY_SECRET', Tools::getValue('KEY_SECRET'));
+            Configuration::updateValue('ENABLE_RAZORPAY_WEBHOOK', Tools::getValue('ENABLE_WEBHOOK'));
+            Configuration::updateValue('RAZORPAY_WEBHOOK_SECRET', Tools::getValue('WEBHOOK_SECRET'));
 
             $this->KEY_ID= Tools::getValue('KEY_ID');
             $this->KEY_SECRET= Tools::getValue('KEY_SECRET');
+            $this->ENABLE_WEBHOOK= Tools::getValue('ENABLE_WEBHOOK');
+            $this->WEBHOOK_SECRET= Tools::getValue('WEBHOOK_SECRET');
         }
 
         $ok = $this->l('Ok');
@@ -305,6 +349,12 @@ class Razorpay extends PaymentModule
             <br />
             <br />
             <br />";
+    }
+
+    //Returns Razorpay API instance
+    public function getRazorpayApiInstance()
+    {
+        return new Api($this->KEY_ID, $this->KEY_SECRET);
     }
 }
 
