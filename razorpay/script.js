@@ -53,6 +53,7 @@ document.addEventListener('DOMContentLoaded', function(event) {
       description: defaults.description,
       name: defaults.name,
       key: defaults.key,
+      order_id:defaults.rzp_order_id,
       currency: prestashop.currency.iso_code,
       prefill: {
         name: customer.firstname + ' ' + customer.lastname,
