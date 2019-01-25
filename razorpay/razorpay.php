@@ -1,8 +1,12 @@
 <?php
 
+require_once __DIR__.'/razorpay.php';
+require_once __DIR__.'/razorpay-sdk/Razorpay.php';
+
 use PrestaShop\PrestaShop\Core\Payment\PaymentOption;
 use PrestaShop\PrestaShop\Adapter\Cart\CartPresenter;
 use Razorpay\Api\Api;
+use Razorpay\Api\Errors;
 
 class Razorpay extends PaymentModule
 {
@@ -200,11 +204,24 @@ class Razorpay extends PaymentModule
 
             $cart_presenter = new CartPresenter();
 
+            $amount = ($this->context->cart->getOrderTotal() * 100);
+            $rzp_order_id = "";
+
+            try{
+                $rzp_order  = $this->getRazorpayApiInstance()->order->create(array('amount' => $amount, 'currency' => 'INR','payment_capture'=>'1'));
+                $rzp_order_id = $rzp_order->id;
+            } catch (\Razorpay\Api\Errors\BadRequestError $e){
+                $error = $e->getMessage();
+                Logger::addLog("Order creation failed with the error ".$error, 4);
+            }
+
+
             Media::addJsDef([
                 'razorpay_checkout_vars'    =>  [
                     'key'           => $this->KEY_ID,
                     'name'          => Configuration::get('PS_SHOP_NAME'),
                     'cart'          => $cart_presenter->present($this->context->cart),
+                    'rzp_order_id'     => $rzp_order_id
                 ]
             ]);
         }

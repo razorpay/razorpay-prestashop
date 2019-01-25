@@ -59,9 +59,7 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
         try
         {
             $payment = $api->payment->fetch($paymentId);
-
-            $payment->capture(['amount' => $total]);
-
+            
             $customer = new Customer($cart->id_customer);
 
             /**
