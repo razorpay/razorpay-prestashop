@@ -200,11 +200,14 @@ class Razorpay extends PaymentModule
 
             $cart_presenter = new CartPresenter();
 
+            $amount = ($this->context->cart->getOrderTotal() * 100);
+
             Media::addJsDef([
                 'razorpay_checkout_vars'    =>  [
                     'key'           => $this->KEY_ID,
                     'name'          => Configuration::get('PS_SHOP_NAME'),
                     'cart'          => $cart_presenter->present($this->context->cart),
+                    'amount'        => $amount,
                 ]
             ]);
         }
