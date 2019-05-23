@@ -60,6 +60,32 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
         {
             $payment = $api->payment->fetch($paymentId);
 
+            //validate Rzp signature
+            try
+            {
+                session_start();
+                $attributes = array(
+                    'razorpay_order_id' => $_SESSION['rzp_order_id'],
+                    'razorpay_payment_id' => $_REQUEST['razorpay_payment_id'],
+                    'razorpay_signature' => $_POST['razorpay_signature']
+                );
+
+                $api->utility->verifyPaymentSignature($attributes);
+            }
+            catch(SignatureVerificationError $e)
+            {
+
+                Logger::addLog("Payment Failed for Order# ".$cart->id.". Razorpay payment id: ".$paymentId. "Error: ". $error, 4);
+
+                echo 'Error! Please contact the seller directly for assistance.</br>';
+                echo 'Order Id: '.$cart->id.'</br>';
+                echo 'Razorpay Payment Id: '.$paymentId.'</br>';
+                echo 'Error: '.$e->getMessage().'</br>';
+
+                exit;
+            }
+
+
             $payment->capture(['amount' => $total]);
 
             $customer = new Customer($cart->id_customer);

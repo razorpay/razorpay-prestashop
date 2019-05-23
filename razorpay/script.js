@@ -59,6 +59,10 @@ document.addEventListener('DOMContentLoaded', function(event) {
         email: customer.email,
         contact: contactNumber,
       },
+      order_id: defaults.rzp_order_id,
+      notes: {
+        prestashop_order_id: defaults.cart_id,
+      },
       handler: function(obj) {
         clearInterval(intervalId);
 
@@ -73,6 +77,11 @@ document.addEventListener('DOMContentLoaded', function(event) {
           'action',
           action + '?razorpay_payment_id=' + obj.razorpay_payment_id
         );
+
+        let razorpay_signature = document.createElement("INPUT");
+        Object.assign(razorpay_signature, {"type" : "hidden", "name" : "razorpay_signature", "value" : obj.razorpay_signature});
+
+        form.appendChild(razorpay_signature);
 
         submitButton.getElementsByTagName('button')[0].click();
       },
