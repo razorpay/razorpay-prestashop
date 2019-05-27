@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function(event) {
       },
       order_id: defaults.rzp_order_id,
       notes: {
-        prestashop_order_id: defaults.cart_id,
+        prestashop_cart_id: defaults.cart_id,
       },
       handler: function(obj) {
         clearInterval(intervalId);

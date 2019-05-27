@@ -204,13 +204,13 @@ class Razorpay extends PaymentModule
             $amount = ($this->context->cart->getOrderTotal() * 100);
             $rzp_order_id = "";
             try{
-                $rzp_order  = $this->getRazorpayApiInstance()->order->create(array('amount' => $amount, 'currency' => 'INR','payment_capture'=>'0'));
+                $rzp_order  = $this->getRazorpayApiInstance()->order->create(array('amount' => $amount, 'currency' => 'INR', 'payment_capture' => '0'));
                 $rzp_order_id = $rzp_order->id;
                 session_start();
                 $_SESSION['rzp_order_id'] = $rzp_order_id;
             } catch (\Razorpay\Api\Errors\BadRequestError $e){
                 $error = $e->getMessage();
-                Logger::addLog("Order creation failed with the error ".$error, 4);
+                Logger::addLog("Order creation failed with the error " . $error, 4);
             }
 
             Media::addJsDef([
@@ -243,7 +243,7 @@ class Razorpay extends PaymentModule
 
                     //update the Razorpay payment with corresponding created order ID of this cart ID
                     try{
-                        $this->getRazorpayApiInstance()->payment->fetch($paymentId)->edit(array('notes' => array('prestashop_order_id' => $order->id,'cart_id'=>$order->id_cart)));
+                        $this->getRazorpayApiInstance()->payment->fetch($paymentId)->edit(array('notes' => array('prestashop_order_id' => $order->id, 'prestashop_cart_id'=>$order->id_cart)));
 
                     } catch (\Razorpay\Api\Errors\BadRequestError $e){
                         $error = $e->getMessage();
