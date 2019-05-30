@@ -204,7 +204,7 @@ class Razorpay extends PaymentModule
             $amount = ($this->context->cart->getOrderTotal() * 100);
             $rzp_order_id = "";
             try{
-                $rzp_order  = $this->getRazorpayApiInstance()->order->create(array('amount' => $amount, 'currency' => 'INR', 'payment_capture' => '0'));
+                $rzp_order  = $this->getRazorpayApiInstance()->order->create(array('amount' => $amount, 'currency' => $this->context->currency->iso_code, 'payment_capture' => '0'));
                 $rzp_order_id = $rzp_order->id;
                 session_start();
                 $_SESSION['rzp_order_id'] = $rzp_order_id;
