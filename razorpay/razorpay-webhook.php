@@ -139,7 +139,7 @@ class RZP_Webhook
         $cartId = $data['payload']['payment']['entity']['notes']['prestashop_cart_id'];
 
         // check if a order already present for this cart
-        $cart = new Cart($cartId); echo $cart->id;
+        $cart = new Cart($cartId);
     
         // Fetch the Order ID of this CartId
         $orderId = Order::getOrderByCartId($cart->id);
