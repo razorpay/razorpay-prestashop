@@ -20,7 +20,6 @@ class RZP_Webhook
      */
     protected $api;
 
-
     /**
      * Event constants
      */
@@ -49,7 +48,6 @@ class RZP_Webhook
     public function process()
     {
         $post = file_get_contents('php://input');
-
 
         $data = json_decode($post, true);
 
@@ -86,8 +84,9 @@ class RZP_Webhook
                         );
 
                         Logger::addLog("Error: ". json_encode($log), 4);
-
-                        return;
+                        //Set the validation error in response
+                        header('Status: 400 Signature Verification failed', true, 400);    
+                        exit;
                     }
 
                     switch ($data['event'])
