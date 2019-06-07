@@ -14,8 +14,6 @@ class RazorpayWebhookModuleFrontController extends ModuleFrontController
         try
         {
             $rzpWebhook->process();
-            //Graceful exit in case of event not handled by this script
-            exit;
         }
         catch(\Razorpay\Api\Errors\BadRequestError $e)
         {
