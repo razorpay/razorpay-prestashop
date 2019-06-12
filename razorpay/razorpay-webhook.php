@@ -84,8 +84,9 @@ class RZP_Webhook
                         );
 
                         Logger::addLog("Error: ". json_encode($log), 4);
-
-                        return;
+                        //Set the validation error in response
+                        header('Status: 400 Signature Verification failed', true, 400);    
+                        exit;
                     }
 
                     switch ($data['event'])
@@ -133,38 +134,111 @@ class RZP_Webhook
      */
     protected function orderPaid(array $data)
     {
-        //reference_no (ps order id) should be passed in payload
-        $orderId = $data['payload']['payment']['entity']['notes']['reference_no'];
+        // reference_no (prestashop_cart_id) should be passed in payload
+        $cartId = $data['payload']['payment']['entity']['notes']['prestashop_cart_id'];
+
+        // check if a order already present for this cart
+        $cart = new Cart($cartId);
     
-        $order = new Order($orderId);
+        // Fetch the Order ID of this CartId
+        $orderId = Order::getOrderByCartId($cart->id);
 
-        // If no cart associated with the order, ignore the event
-        if(empty($order->id_cart))
+        // If order associated with the cart
+        if(!empty($orderId))
         {
+            $order = new Order($orderId);
+
+            // If payment is already done, ignore the event
+            $payments = $order->getOrderPayments();
+
+            if (count($payments) >= 1)
+            {
+                exit;
+            }
+
+            $razorpayPaymentId = $data['payload']['payment']['entity']['id'];
+
+            try
+            {
+                $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
+            }
+            catch (Exception $e)
+            {
+                $error = $e->getMessage();
+
+                Logger::addLog("Payment Failed for Order# ".$cart->id.". Razorpay payment id: ".$razorpayPaymentId. "Error: ". $error, 1);
+
+                echo 'Order Id: '.$order->id_cart.'</br>';
+                echo 'Razorpay Payment Id: '.$razorpayPaymentId.'</br>';
+                echo 'Error: '.$error.'</br>';
+
+                exit;
+            }
             exit;
         }
 
-        // If payment is already done, ignore the event
-        $payments = $order->getOrderPayments();
 
-        if (count($payments) >= 1)
-        {
-            exit;
-        }
+        //create a fresh order for the cart as payment already successfull
+        try{
 
-        $razorpayPaymentId = $data['payload']['payment']['entity']['id'];
+            $customer = new Customer($cart->id_customer);
 
-        try
-        {
-            $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
+            /**
+             * Validate an order in database
+             * Function called from a payment module
+             *
+             * @param int     $id_cart
+             * @param int     $id_order_state
+             * @param float   $amount_paid       Amount really paid by customer (in the default currency)
+             * @param string  $payment_method    Payment method (eg. 'Credit card')
+             * @param null    $message           Message to attach to order
+             * @param array   $extra_vars
+             * @param null    $currency_special
+             * @param bool    $dont_touch_amount
+             * @param bool    $secure_key
+             * @param Shop    $shop
+             *
+             * @return bool
+             * @throws PrestaShopException
+             */
+
+            $razorpayPaymentId = $data['payload']['payment']['entity']['id'];
+            $extraData = array(
+                'transaction_id'    =>  $razorpayPaymentId,
+            );
+
+            // So netbanking becomes razorpay.netbanking
+            $method = "razorpay." . $data['payload']['payment']['entity']['method'];
+
+            $ret = $this->razorpay->validateOrder(
+                $cart->id,
+                (int) Configuration::get('PS_OS_PAYMENT'),
+                $cart->getOrderTotal(true, Cart::BOTH),
+                $method,
+                'Payment by Razorpay using ' . $data['payload']['payment']['entity']['method'],
+                $extraData,
+                NULL,
+                false,
+                $customer->secure_key
+            );
+
+            //Update the Razorpay payment with corresponding created order ID of this cart ID
+            try{
+                $this->api->payment->fetch($razorpayPaymentId)->edit(array('notes' => array('prestashop_order_id' => $this->razorpay->currentOrder,'prestashop_cart_id'=>$cart->id)));
+
+            } catch (\Razorpay\Api\Errors\BadRequestError $e){
+                $error = $e->getMessage();
+                Logger::addLog("Razorpay payment notes update failed for the webhook of Razorpay payment id: ".$razorpayPaymentId. "with the Error ".$error, 4);
+            }
+
         }
         catch (Exception $e)
         {
             $error = $e->getMessage();
 
-            Logger::addLog("Payment Failed for Order# ".$order->id_cart.". Razorpay payment id: ".$razorpayPaymentId. "Error: ". $error, 1);
+            Logger::addLog("Order creation Failed for Cart# ".$cart->id.". Razorpay payment id: ".$razorpayPaymentId. "Error: ". $error, 1);
 
-            echo 'Order Id: '.$order->id_cart.'</br>';
+            echo 'Cart Id: '.$cart->id.'</br>';
             echo 'Razorpay Payment Id: '.$razorpayPaymentId.'</br>';
             echo 'Error: '.$error.'</br>';
 

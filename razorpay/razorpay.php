@@ -1,5 +1,6 @@
 <?php
 
+require_once __DIR__.'/razorpay-sdk/Razorpay.php';
 use PrestaShop\PrestaShop\Core\Payment\PaymentOption;
 use PrestaShop\PrestaShop\Adapter\Cart\CartPresenter;
 use Razorpay\Api\Api;
@@ -200,11 +201,26 @@ class Razorpay extends PaymentModule
 
             $cart_presenter = new CartPresenter();
 
+            $amount = ($this->context->cart->getOrderTotal() * 100);
+            $rzp_order_id = "";
+            try{
+                $rzp_order  = $this->getRazorpayApiInstance()->order->create(array('amount' => $amount, 'currency' => $this->context->currency->iso_code, 'payment_capture' => '0'));
+                $rzp_order_id = $rzp_order->id;
+                session_start();
+                $_SESSION['rzp_order_id'] = $rzp_order_id;
+            } catch (\Razorpay\Api\Errors\BadRequestError $e){
+                $error = $e->getMessage();
+                Logger::addLog("Order creation failed with the error " . $error, 4);
+            }
+
             Media::addJsDef([
                 'razorpay_checkout_vars'    =>  [
                     'key'           => $this->KEY_ID,
                     'name'          => Configuration::get('PS_SHOP_NAME'),
                     'cart'          => $cart_presenter->present($this->context->cart),
+                    'amount'        => $amount,
+                    'cart_id'       => $this->context->cart->id,
+                    'rzp_order_id'  => $rzp_order_id,
                 ]
             ]);
         }
@@ -224,6 +240,15 @@ class Razorpay extends PaymentModule
                 {
                     $payment = $payments[0];
                     $paymentId = $payment->transaction_id;
+
+                    //update the Razorpay payment with corresponding created order ID of this cart ID
+                    try{
+                        $this->getRazorpayApiInstance()->payment->fetch($paymentId)->edit(array('notes' => array('prestashop_order_id' => $order->id, 'prestashop_cart_id'=>$order->id_cart)));
+
+                    } catch (\Razorpay\Api\Errors\BadRequestError $e){
+                        $error = $e->getMessage();
+                        Logger::addLog("Razorpay payment notes update failed with the error ".$error, 4);
+                    }
 
                     return "Your Razorpay Payment Id is <code>$paymentId</code>";
                 }

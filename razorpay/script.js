@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function(event) {
     var customer = prestashop.customer;
     options = {
       name: prestashop.shop.name,
-      amount: Math.round(defaults.cart.totals.total.amount * 100),
+      amount: defaults.amount,
       description: defaults.description,
       name: defaults.name,
       key: defaults.key,
@@ -58,6 +58,11 @@ document.addEventListener('DOMContentLoaded', function(event) {
         name: customer.firstname + ' ' + customer.lastname,
         email: customer.email,
         contact: contactNumber,
+      },
+      order_id: defaults.rzp_order_id,
+      notes: {
+        prestashop_order_id: '',
+        prestashop_cart_id: defaults.cart_id,
       },
       handler: function(obj) {
         clearInterval(intervalId);
@@ -73,6 +78,11 @@ document.addEventListener('DOMContentLoaded', function(event) {
           'action',
           action + '?razorpay_payment_id=' + obj.razorpay_payment_id
         );
+
+        let razorpay_signature = document.createElement("INPUT");
+        Object.assign(razorpay_signature, {"type" : "hidden", "name" : "razorpay_signature", "value" : obj.razorpay_signature});
+
+        form.appendChild(razorpay_signature);
 
         submitButton.getElementsByTagName('button')[0].click();
       },
