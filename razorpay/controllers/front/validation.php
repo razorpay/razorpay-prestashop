@@ -86,7 +86,7 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
             }
 
 
-            $payment->capture(['amount' => $total, 'currency' => $currency->iso_code]);
+            $payment->capture(['amount' => $total]);
 
             $customer = new Customer($cart->id_customer);
 
