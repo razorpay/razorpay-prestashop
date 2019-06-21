@@ -24,7 +24,7 @@ class Razorpay extends PaymentModule
         $this->name = 'razorpay';
         $this->displayName = 'Razorpay';
         $this->tab = 'payments_gateways';
-        $this->version = '2.0.0';
+        $this->version = '2.0.1';
         $this->need_instance = 1;
         $this->ps_versions_compliancy = ['min' => '1.7.0.0', 'max' => _PS_VERSION_];
         $this->display = true;
@@ -215,12 +215,14 @@ class Razorpay extends PaymentModule
 
             Media::addJsDef([
                 'razorpay_checkout_vars'    =>  [
-                    'key'           => $this->KEY_ID,
-                    'name'          => Configuration::get('PS_SHOP_NAME'),
-                    'cart'          => $cart_presenter->present($this->context->cart),
-                    'amount'        => $amount,
-                    'cart_id'       => $this->context->cart->id,
-                    'rzp_order_id'  => $rzp_order_id,
+                    'key'               => $this->KEY_ID,
+                    'name'              => Configuration::get('PS_SHOP_NAME'),
+                    'cart'              => $cart_presenter->present($this->context->cart),
+                    'amount'            => $amount,
+                    'cart_id'           => $this->context->cart->id,
+                    'rzp_order_id'      => $rzp_order_id,
+                    'ps_version'        => _PS_VERSION_,
+                    'module_version'    => $this->version,
                 ]
             ]);
         }
