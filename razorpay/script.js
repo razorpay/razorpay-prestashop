@@ -64,6 +64,11 @@ document.addEventListener('DOMContentLoaded', function(event) {
         prestashop_order_id: '',
         prestashop_cart_id: defaults.cart_id,
       },
+      _:{
+        integration: 'prestashop',
+        integration_version: defaults.module_version,
+        integration_parent_version: defaults.ps_version,
+      },
       handler: function(obj) {
         clearInterval(intervalId);
 
