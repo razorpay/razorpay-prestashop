@@ -64,10 +64,10 @@ document.addEventListener('DOMContentLoaded', function(event) {
         prestashop_order_id: '',
         prestashop_cart_id: defaults.cart_id,
       },
-      _:{
+      _: {
         integration: 'prestashop',
         integration_version: defaults.module_version,
-        integration_parent_version: defaults.ps_version,
+        integration_parent_version: defaults.ps_version
       },
       handler: function(obj) {
         clearInterval(intervalId);
@@ -85,7 +85,11 @@ document.addEventListener('DOMContentLoaded', function(event) {
         );
 
         let razorpay_signature = document.createElement("INPUT");
-        Object.assign(razorpay_signature, {"type" : "hidden", "name" : "razorpay_signature", "value" : obj.razorpay_signature});
+        Object.assign(razorpay_signature, {
+          type: "hidden",
+          name: "razorpay_signature",
+          value: obj.razorpay_signature
+        });
 
         form.appendChild(razorpay_signature);
 
