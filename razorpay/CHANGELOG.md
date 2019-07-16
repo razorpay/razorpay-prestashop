@@ -5,6 +5,15 @@ Razorpay Prestashop Plugin Changelog
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2019-07-17
+
+### Added
+- Support for Orders API with delayed capture
+- Support for order.paid webhook
+- Config for webhook enable and secret
+- Payments edit to insert Prestashop Order ID in notes
+- Support for multicurrency
+
 ## [2.0.0] - 2017-08-08
 
 ### Added
