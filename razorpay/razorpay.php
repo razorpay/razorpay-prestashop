@@ -17,6 +17,8 @@ class Razorpay extends PaymentModule
     private $_postErrors = [];
 
     const RAZORPAY_CHECKOUT_URL = 'https://checkout.razorpay.com/v1/checkout.js';
+    const CAPTURE = 'capture';
+    const AUTHORIZE = 'authorize';
 
     public function __construct()
     {
@@ -35,6 +37,7 @@ class Razorpay extends PaymentModule
         $config = Configuration::getMultiple([
             'RAZORPAY_KEY_ID',
             'RAZORPAY_KEY_SECRET',
+            'RAZORPAY_PAYMENT_ACTION',
             'ENABLE_RAZORPAY_WEBHOOK',
             'RAZORPAY_WEBHOOK_SECRET'
         ]);
@@ -47,6 +50,11 @@ class Razorpay extends PaymentModule
         if (array_key_exists('RAZORPAY_KEY_SECRET', $config))
         {
             $this->KEY_SECRET = $config['RAZORPAY_KEY_SECRET'];
+        }
+
+        if (array_key_exists('RAZORPAY_PAYMENT_ACTION', $config))
+        {
+            $this->PAYMENT_ACTION = $config['RAZORPAY_PAYMENT_ACTION'];
         }
 
         if (array_key_exists('ENABLE_RAZORPAY_WEBHOOK', $config))
@@ -115,6 +123,13 @@ class Razorpay extends PaymentModule
         $modEnableWebhookLabel = $this->l('Enable Webhook');
         $modWebhookSecretLabel = $this->l('Webhook Secret');
 
+        $modPayActionCaptureLabel = $this->l('Authorize and Capture');
+        $modPayActionAuthorizeLabel = $this->l('Authorize');
+        $modPayActionCapture = self::CAPTURE;
+        $modPayActionAuthorize = self::AUTHORIZE;
+        $modPayActionCaptureSelected = ($this->PAYMENT_ACTION === self::CAPTURE || !$this->PAYMENT_ACTION) ? "selected = 'selected'" : "";
+        $modPayActionAuthorizeSelected = ($this->PAYMENT_ACTION === self::AUTHORIZE) ? "selected = 'selected'" : "";
+
         $webhookUrl = __PS_BASE_URI__.'module/razorpay/webhook';
 
         $modWebhookDescription = $this->l('Enable Razorpay Webhook at https://dashboard.razorpay.com/#/app/webhooks with the URL '. $webhookUrl);
@@ -143,6 +158,15 @@ class Razorpay extends PaymentModule
                                         <td width='130'>{$modClientLabelKeySecret}</td>
                                         <td>
                                                 <input type='text' name='KEY_SECRET' value='{$modClientValueKeySecret}' style='width: 300px;' />
+                                        </td>
+                                </tr>
+                                <tr>
+                                        <td width='130'>Payment Action</td>
+                                        <td>
+                                                <select name='PAYMENT_ACTION' style='margin:3px 0px;'>
+                                                    <option value='{$modPayActionAuthorize}' $modPayActionAuthorizeSelected >{$modPayActionAuthorizeLabel}</option>
+                                                    <option value='{$modPayActionCapture}' $modPayActionCaptureSelected >{$modPayActionCaptureLabel}</option>
+                                                </selet>
                                         </td>
                                 </tr>
                                 <tr>
@@ -204,7 +228,7 @@ class Razorpay extends PaymentModule
             $amount = ($this->context->cart->getOrderTotal() * 100);
             $rzp_order_id = "";
             try{
-                $rzp_order  = $this->getRazorpayApiInstance()->order->create(array('amount' => $amount, 'currency' => $this->context->currency->iso_code, 'payment_capture' => '0'));
+                $rzp_order  = $this->getRazorpayApiInstance()->order->create(array('amount' => $amount, 'currency' => $this->context->currency->iso_code, 'payment_capture' => ($this->PAYMENT_ACTION === self::CAPTURE) ? 1 : 0));
                 $rzp_order_id = $rzp_order->id;
                 session_start();
                 $_SESSION['rzp_order_id'] = $rzp_order_id;
@@ -265,6 +289,7 @@ class Razorpay extends PaymentModule
     {
         Configuration::deleteByName('RAZORPAY_KEY_ID');
         Configuration::deleteByName('RAZORPAY_KEY_SECRET');
+        Configuration::deleteByName('RAZORPAY_PAYMENT_ACTION');
         Configuration::deleteByName('ENABLE_RAZORPAY_WEBHOOK');
         Configuration::deleteByName('RAZORPAY_WEBHOOK_SECRET');
 
@@ -347,11 +372,13 @@ class Razorpay extends PaymentModule
         {
             Configuration::updateValue('RAZORPAY_KEY_ID', Tools::getValue('KEY_ID'));
             Configuration::updateValue('RAZORPAY_KEY_SECRET', Tools::getValue('KEY_SECRET'));
+            Configuration::updateValue('RAZORPAY_PAYMENT_ACTION', Tools::getValue('PAYMENT_ACTION'));
             Configuration::updateValue('ENABLE_RAZORPAY_WEBHOOK', Tools::getValue('ENABLE_WEBHOOK'));
             Configuration::updateValue('RAZORPAY_WEBHOOK_SECRET', Tools::getValue('WEBHOOK_SECRET'));
 
             $this->KEY_ID= Tools::getValue('KEY_ID');
             $this->KEY_SECRET= Tools::getValue('KEY_SECRET');
+            $this->PAYMENT_ACTION= Tools::getValue('PAYMENT_ACTION');
             $this->ENABLE_WEBHOOK= Tools::getValue('ENABLE_WEBHOOK');
             $this->WEBHOOK_SECRET= Tools::getValue('WEBHOOK_SECRET');
         }
