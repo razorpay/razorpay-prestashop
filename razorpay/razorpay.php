@@ -26,7 +26,7 @@ class Razorpay extends PaymentModule
         $this->name = 'razorpay';
         $this->displayName = 'Razorpay';
         $this->tab = 'payments_gateways';
-        $this->version = '2.0.1';
+        $this->version = '2.1.0';
         $this->need_instance = 1;
         $this->ps_versions_compliancy = ['min' => '1.7.0.0', 'max' => _PS_VERSION_];
         $this->display = true;
@@ -134,7 +134,7 @@ class Razorpay extends PaymentModule
 
         $modWebhookDescription = $this->l('Enable Razorpay Webhook at https://dashboard.razorpay.com/#/app/webhooks with the URL '. $webhookUrl);
         $modWebhookSecretDescription = $this->l('Webhook secret is used for webhook signature verification. This has to match the one added at https://dashboard.razorpay.com/#/app/webhooks');
-        
+
         $this->_html .=
         "
         <br />
