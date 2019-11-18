@@ -393,7 +393,7 @@ class Razorpay extends PaymentModule
         $modDesc    = $this->l('This module allows you to accept payments using Razorpay.');
         $modStatus  = $this->l('Razorpay online payment service is the right solution for you if you are accepting payments in INR');
         $modconfirm = $this->l('');
-        $this->_html .= "<img src='../modules/razorpay/logo.png' style='float:left; margin-right:15px;' />
+        $this->_html .= "<img src='https://cdn.razorpay.com/logo.svg' style='float:left; margin-right:15px;' />
             <b>{$modDesc}</b>
             <br />
             <br />
