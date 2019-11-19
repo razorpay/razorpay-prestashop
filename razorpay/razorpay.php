@@ -141,7 +141,7 @@ class Razorpay extends PaymentModule
         <br />
         <p><form action='{$_SERVER['REQUEST_URI']}' method='post'>
                 <fieldset>
-                <legend><img src='../img/admin/access.png' />{$modrazorpay}</legend>
+                <legend><img src='../img/admin/edit.gif' />{$modrazorpay}</legend>
                         <table border='0' width='500' cellpadding='0' cellspacing='0' id='form'>
                                 <tr>
                                         <td colspan='2'>
