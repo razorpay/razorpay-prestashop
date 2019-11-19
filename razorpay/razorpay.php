@@ -383,9 +383,7 @@ class Razorpay extends PaymentModule
             $this->WEBHOOK_SECRET= Tools::getValue('WEBHOOK_SECRET');
         }
 
-        $ok = $this->l('Ok');
-        $updated = $this->l('Settings Updated');
-        $this->_html .= "<div class='conf confirm'><img src='../img/admin/ok.gif' alt='{$ok}' />{$updated}</div>";
+        $this->_html .= $this->displayConfirmation($this->trans('Settings updated', array(), 'Admin.Notifications.Success'));
     }
 
     private function _displayrazorpay()
