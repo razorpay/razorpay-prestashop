@@ -26,7 +26,7 @@ class Razorpay extends PaymentModule
         $this->name = 'razorpay';
         $this->displayName = 'Razorpay';
         $this->tab = 'payments_gateways';
-        $this->version = '2.1.0';
+        $this->version = '2.2.1';
         $this->need_instance = 1;
         $this->ps_versions_compliancy = ['min' => '1.7.0.0', 'max' => _PS_VERSION_];
         $this->display = true;
@@ -141,7 +141,7 @@ class Razorpay extends PaymentModule
         <br />
         <p><form action='{$_SERVER['REQUEST_URI']}' method='post'>
                 <fieldset>
-                <legend><img src='../img/admin/access.png' />{$modrazorpay}</legend>
+                <legend><img src='../img/admin/edit.gif' />{$modrazorpay}</legend>
                         <table border='0' width='500' cellpadding='0' cellspacing='0' id='form'>
                                 <tr>
                                         <td colspan='2'>
@@ -383,9 +383,7 @@ class Razorpay extends PaymentModule
             $this->WEBHOOK_SECRET= Tools::getValue('WEBHOOK_SECRET');
         }
 
-        $ok = $this->l('Ok');
-        $updated = $this->l('Settings Updated');
-        $this->_html .= "<div class='conf confirm'><img src='../img/admin/ok.gif' alt='{$ok}' />{$updated}</div>";
+        $this->_html .= $this->displayConfirmation($this->trans('Settings updated', array(), 'Admin.Notifications.Success'));
     }
 
     private function _displayrazorpay()
@@ -393,7 +391,7 @@ class Razorpay extends PaymentModule
         $modDesc    = $this->l('This module allows you to accept payments using Razorpay.');
         $modStatus  = $this->l('Razorpay online payment service is the right solution for you if you are accepting payments in INR');
         $modconfirm = $this->l('');
-        $this->_html .= "<img src='../modules/razorpay/logo.png' style='float:left; margin-right:15px;' />
+        $this->_html .= "<img src='https://cdn.razorpay.com/logo.svg' style='float:left; margin-right:15px;' />
             <b>{$modDesc}</b>
             <br />
             <br />
