@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__.'/razorpay-sdk/Razorpay.php';
+use Razorpay\Api\Api;
 
 class Razorpay extends PaymentModule
 {
@@ -123,12 +125,24 @@ class Razorpay extends PaymentModule
         $checkoutUrl = 'https://checkout.razorpay.com/v1/checkout.js';
         $amount = number_format($cart->getOrderTotal(true, 3), 2, '.', '')*100;
 
+        try{
+            $api = new Api($this->KEY_ID, $this->KEY_SECRET);
+            $rzp_order  = $api->order->create(array('amount' => $amount, 'currency' => $order_currency, 'payment_capture' => 1));
+            $rzp_order_id = $rzp_order->id;
+            session_start();
+            $_SESSION['rzp_order_id'] = $rzp_order_id;
+        } catch (\Razorpay\Api\Errors\BadRequestError $e){
+            $error = $e->getMessage();
+            Logger::addLog("Order creation failed with the error " . $error, 4);
+        }
+
         $razorpay_args = array(
           'key'         => Configuration::get('RAZORPAY_KEY_ID'),
           'name'        => Configuration::get('PS_SHOP_NAME'),
           'amount'      => $amount,
           'currency'    => $order_currency,
           'description' => "Order #" . $cart->id,
+          'order_id'    => $rzp_order_id,
           'prefill'     => array(
             'name'      => $invoice->firstname . ' ' . $invoice->lastname,
             'email'     => $customer->email,
@@ -136,6 +150,11 @@ class Razorpay extends PaymentModule
           ),
           'notes'       => array(
             'merchant_order_id' => $cart->id
+          ),
+          '_'           => array(
+            'integration'                   => 'prestashop',
+            'integration_version'           => $this->version,
+            'integration_parent_version'    => _PS_VERSION_
           )
         );
 
