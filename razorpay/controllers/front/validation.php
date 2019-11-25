@@ -43,12 +43,8 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
         catch(\Razorpay\Api\Errors\SignatureVerificationError $e)
         {   
             $success = false;
-            Logger::addLog("Payment Failed for Order# ".$cart->id.". Razorpay payment id: ".$razorpay_payment_id. "Error: ". $error, 4);
 
-            echo 'Error! Please contact the seller directly for assistance.</br>';
-            echo 'Order Id: '.$cart->id.'</br>';
-            echo 'Razorpay Payment Id: '.$razorpay_payment_id.'</br>';
-            echo 'Error: '.$e->getMessage().'</br>';
+            $error = $e->getMessage();
         }
 
         if ($success === true) {
@@ -68,6 +64,14 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
             $url = 'index.php?' . $query;
 
             Tools::redirect($url);
+        }
+        else
+        {
+            Logger::addLog("Payment Failed for Order# ".$cart_id.". Razorpay payment id:".$razorpay_payment_id. "Error: ".$error, 4);
+            echo 'Error! Please contact the seller directly for assistance.</br>';
+            echo 'Order Id: '.$cart_id.'</br>';
+            echo 'Razorpay Payment Id: '.$razorpay_payment_id.'</br>';
+            echo 'Error: '.$error.'</br>';
         }
     }
 }
