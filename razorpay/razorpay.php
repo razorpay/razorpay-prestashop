@@ -15,7 +15,7 @@ class Razorpay extends PaymentModule
         $this->name = 'razorpay';
         $this->displayName = 'Razorpay';
         $this->tab = 'payments_gateways';
-        $this->version = '1.3.1';
+        $this->version = '1.4.0';
         $this->author = 'Team Razorpay';
         $this->module_key = '084fe8aecafea8b2f84cca493377eb9b';
 
