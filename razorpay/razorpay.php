@@ -1,6 +1,5 @@
 <?php
 require_once __DIR__.'/razorpay-sdk/Razorpay.php';
-use Razorpay\Api\Api;
 
 class Razorpay extends PaymentModule
 {
@@ -15,7 +14,7 @@ class Razorpay extends PaymentModule
         $this->name = 'razorpay';
         $this->displayName = 'Razorpay';
         $this->tab = 'payments_gateways';
-        $this->version = '1.4.0';
+        $this->version = '1.4.1';
         $this->author = 'Team Razorpay';
         $this->module_key = '084fe8aecafea8b2f84cca493377eb9b';
 
@@ -126,7 +125,7 @@ class Razorpay extends PaymentModule
         $amount = number_format($cart->getOrderTotal(true, 3), 2, '.', '')*100;
 
         try{
-            $api = new Api($this->KEY_ID, $this->KEY_SECRET);
+            $api = new \Razorpay\Api\Api($this->KEY_ID, $this->KEY_SECRET);
             $rzp_order  = $api->order->create(array('amount' => $amount, 'currency' => $order_currency, 'payment_capture' => 1));
             $rzp_order_id = $rzp_order->id;
             session_start();
