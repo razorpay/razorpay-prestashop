@@ -43,13 +43,13 @@ document.addEventListener('DOMContentLoaded', function(event) {
     return '';
   })();
 
-  // Pay button gets clicked
-  newSubmitButton.addEventListener('click', function(event) {
+
+  var renderPaymentFrame =  function(data) {
     var defaults = window.razorpay_checkout_vars;
     var customer = prestashop.customer;
     options = {
       name: prestashop.shop.name,
-      amount: defaults.amount,
+      amount: data.amount,
       description: defaults.description,
       name: defaults.name,
       key: defaults.key,
@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function(event) {
         email: customer.email,
         contact: contactNumber,
       },
-      order_id: defaults.rzp_order_id,
+      order_id: data.rzp_order_id,
       notes: {
         prestashop_order_id: '',
         prestashop_cart_id: defaults.cart_id,
@@ -98,7 +98,17 @@ document.addEventListener('DOMContentLoaded', function(event) {
     };
     var checkout = new Razorpay(options);
     checkout.open();
+  };
+
+  // Pay button gets clicked
+  newSubmitButton.addEventListener('click', function(event) {
+    $.post('module/razorpay/order', '[]').then(function (response) {
+      if (response.success) {
+        renderPaymentFrame(response);
+      }
+    });
   });
+
 
   var parent = document.querySelector('#checkout-payment-step');
 

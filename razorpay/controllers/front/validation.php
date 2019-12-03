@@ -72,9 +72,9 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
 
                 $api->utility->verifyPaymentSignature($attributes);
             }
-            catch(SignatureVerificationError $e)
+            catch(\Razorpay\Api\Errors\SignatureVerificationError $e)
             {
-
+                $error = $e->getMessage();
                 Logger::addLog("Payment Failed for Order# ".$cart->id.". Razorpay payment id: ".$paymentId. "Error: ". $error, 4);
 
                 echo 'Error! Please contact the seller directly for assistance.</br>';
