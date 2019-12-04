@@ -225,17 +225,8 @@ class Razorpay extends PaymentModule
 
             $cart_presenter = new CartPresenter();
 
-            $amount = ($this->context->cart->getOrderTotal() * 100);
+            $amount = number_format(($this->context->cart->getOrderTotal() * 100), 0, "", "");
             $rzp_order_id = "";
-            try{
-                $rzp_order  = $this->getRazorpayApiInstance()->order->create(array('amount' => $amount, 'currency' => $this->context->currency->iso_code, 'payment_capture' => ($this->PAYMENT_ACTION === self::CAPTURE) ? 1 : 0));
-                $rzp_order_id = $rzp_order->id;
-                session_start();
-                $_SESSION['rzp_order_id'] = $rzp_order_id;
-            } catch (\Razorpay\Api\Errors\BadRequestError $e){
-                $error = $e->getMessage();
-                Logger::addLog("Order creation failed with the error " . $error, 4);
-            }
 
             Media::addJsDef([
                 'razorpay_checkout_vars'    =>  [
