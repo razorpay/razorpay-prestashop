@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', function(event) {
-  var conditionsForm = document.getElementById('conditions-to-approve');
   // This is a <div> and not the button.
   var submitButton = document.getElementById('payment-confirmation');
   var newSubmitButton = document.createElement('button');
@@ -26,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function(event) {
 
   newSubmitButton.innerHTML = 'Pay' + style;
   newSubmitButton.className = baseClass + 'not-shown';
-  conditionsForm.insertAdjacentElement('afterend', newSubmitButton);
+  submitButton.insertAdjacentElement('beforebegin', newSubmitButton);
 
   var intervalId = null;
 
