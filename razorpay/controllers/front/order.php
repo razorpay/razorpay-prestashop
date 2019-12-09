@@ -17,7 +17,7 @@ class RazorpayOrderModuleFrontController extends ModuleFrontController
             exit;
         }
 
-        $payment_action = Configuration::get('RAZORPAY_KEY_ID');
+        $payment_action = Configuration::get('RAZORPAY_PAYMENT_ACTION') ?? Razorpay::CAPTURE;
 
         $amount = number_format(($this->context->cart->getOrderTotal() * 100), 0, "", "");
 
