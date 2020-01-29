@@ -211,7 +211,7 @@ class Razorpay extends PaymentModule
                     copyText.select();
                     document.execCommand('Copy');
                     copyText.remove();
-                    $('.copy-to-clipboard').text('Webhook url copied to clipboard');
+                    $('.copy-to-clipboard').text('Webhook url copied to clipboard.');
                 });
             });
         </script>";

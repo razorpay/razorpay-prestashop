@@ -67,8 +67,7 @@ class RazorpayOrderModuleFrontController extends ModuleFrontController
             ];
         }
 
-        header('Content-Type: application/json');
-        header('Status:', true, $code);
+        header('Content-Type: application/json', true, $code);
         echo json_encode($responseContent);
         exit;
     }
