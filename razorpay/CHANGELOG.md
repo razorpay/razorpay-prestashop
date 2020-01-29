@@ -5,6 +5,12 @@ Razorpay Prestashop Plugin Changelog
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.3.3] - 2020-01-29
+
+### Changed
+- Added copy button in backend
+- Bug fixed order status
+
 ## [2.3.2] - 2019-12-09
 
 ### Changed
