@@ -26,7 +26,7 @@ class Razorpay extends PaymentModule
         $this->name = 'razorpay';
         $this->displayName = 'Razorpay';
         $this->tab = 'payments_gateways';
-        $this->version = '2.3.2';
+        $this->version = '2.3.3';
         $this->need_instance = 1;
         $this->ps_versions_compliancy = ['min' => '1.7.0.0', 'max' => _PS_VERSION_];
         $this->display = true;
@@ -130,7 +130,7 @@ class Razorpay extends PaymentModule
         $modPayActionCaptureSelected = ($this->PAYMENT_ACTION === self::CAPTURE || !$this->PAYMENT_ACTION) ? "selected = 'selected'" : "";
         $modPayActionAuthorizeSelected = ($this->PAYMENT_ACTION === self::AUTHORIZE) ? "selected = 'selected'" : "";
 
-        $webhookUrl = __PS_BASE_URI__.'module/razorpay/webhook';
+        $webhookUrl = $this->context->link->getModuleLink('razorpay', 'webhook', [], true);
 
         $modWebhookDescription = $this->l('Enable Razorpay Webhook at https://dashboard.razorpay.com/#/app/webhooks with the URL '. $webhookUrl);
         $modWebhookSecretDescription = $this->l('Webhook secret is used for webhook signature verification. This has to match the one added at https://dashboard.razorpay.com/#/app/webhooks');
@@ -176,6 +176,14 @@ class Razorpay extends PaymentModule
                                         </td>
                                 </tr>
                                 <tr>
+                                        <td width='130'>Webhook Url</td>
+                                        <td style='padding:5px 0;'>
+                                            <span style='width:300px;font-weight: bold;' class='webhook-url' >{$webhookUrl}</span>
+                                            <span class='copy-to-clipboard'
+                                            style='background-color: #337ab7; color: white; border: none;cursor: pointer; padding: 2px 4px; text-decoration: none;'>Copy</span>
+                                        </td>
+                                </tr>
+                                <tr>
                                         <td width='130' title='{$modWebhookSecretDescription}'>{$modWebhookSecretLabel}</td>
                                         <td>
                                                 <input type='text' name='WEBHOOK_SECRET' value='{$modWebhookSecret}' style='width: 300px;'/>
@@ -190,7 +198,23 @@ class Razorpay extends PaymentModule
                 </fieldset>
         </form>
         </p>
-        <br />";
+        <br />
+        <script type='text/javascript'>
+            $(function() {
+                $('.copy-to-clipboard').click(function() {
+                    var copyText = document.createElement('input');
+                    copyText.type = 'text';
+                    document.body.appendChild(copyText);
+                    copyText.style = 'display: inline; width: 1px;';
+                    copyText.value = $('.webhook-url').text();
+                    copyText.focus();
+                    copyText.select();
+                    document.execCommand('Copy');
+                    copyText.remove();
+                    $('.copy-to-clipboard').text('Webhook url copied to clipboard.');
+                });
+            });
+        </script>";
     }
 
     public function install()
