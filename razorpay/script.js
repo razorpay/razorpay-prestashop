@@ -73,14 +73,16 @@ document.addEventListener('DOMContentLoaded', function(event) {
 
         // Find the payment form with the correct action
         var form = document.querySelector(
-          'form[id=payment-form][action$="razorpay/validation"]'
+          'form[id=payment-form][action$="'+ defaults.action_controller + '"]'
         );
 
-        var action = form.getAttribute('action');
+        //set razorpay payment id
+        let url = new URL(defaults.action_controller);
+        url.searchParams.set("razorpay_payment_id", obj.razorpay_payment_id);
 
         form.setAttribute(
           'action',
-          action + '?razorpay_payment_id=' + obj.razorpay_payment_id
+          url.href
         );
 
         let razorpay_signature = document.createElement("INPUT");
@@ -101,7 +103,10 @@ document.addEventListener('DOMContentLoaded', function(event) {
 
   // Pay button gets clicked
   newSubmitButton.addEventListener('click', function(event) {
-    $.post('module/razorpay/order', '[]').then(function (response) {
+
+    let defaults = window.razorpay_checkout_vars;
+
+    $.post(defaults.order_controller, '[]').then(function (response) {
       if (response.success) {
         renderPaymentFrame(response);
       }

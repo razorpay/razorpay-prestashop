@@ -26,7 +26,7 @@ class Razorpay extends PaymentModule
         $this->name = 'razorpay';
         $this->displayName = 'Razorpay';
         $this->tab = 'payments_gateways';
-        $this->version = '2.3.3';
+        $this->version = '2.3.4';
         $this->need_instance = 1;
         $this->ps_versions_compliancy = ['min' => '1.7.0.0', 'max' => _PS_VERSION_];
         $this->display = true;
@@ -252,6 +252,9 @@ class Razorpay extends PaymentModule
             $amount = number_format(($this->context->cart->getOrderTotal() * 100), 0, "", "");
             $rzp_order_id = "";
 
+            $order_controller = $this->context->link->getModuleLink('razorpay', 'order', [], true);
+            $action_controller = $this->context->link->getModuleLink('razorpay', 'validation', [], true);
+
             Media::addJsDef([
                 'razorpay_checkout_vars'    =>  [
                     'key'               => $this->KEY_ID,
@@ -262,6 +265,8 @@ class Razorpay extends PaymentModule
                     'rzp_order_id'      => $rzp_order_id,
                     'ps_version'        => _PS_VERSION_,
                     'module_version'    => $this->version,
+                    'order_controller'  => $order_controller,
+                    'action_controller' => $action_controller,
                 ]
             ]);
         }
@@ -315,8 +320,10 @@ class Razorpay extends PaymentModule
     {
         $option = new PaymentOption();
 
+        $method_logo = $this->context->link->getBaseLink().'modules/razorpay/methods.png';
+
         $option->setModuleName('razorpay')
-                ->setLogo('../modules/razorpay/methods.png')
+                ->setLogo($method_logo)
                 ->setAction($this->context->link->getModuleLink('razorpay', 'validation', [], true))
                 ->setCallToActionText('Pay by Razorpay')
                 ->setAdditionalInformation('<p>Pay using Credit/Debit Card, NetBanking, Wallets, or UPI</p>')
