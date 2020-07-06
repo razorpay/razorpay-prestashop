@@ -320,7 +320,7 @@ class Razorpay extends PaymentModule
     {
         $option = new PaymentOption();
 
-        $method_logo = $this->context->link->getBaseLink().'modules/razorpay/methods.png';
+        $method_logo = "https://cdn.razorpay.com/static/assets/logo/payment_method.svg";
 
         $option->setModuleName('razorpay')
                 ->setLogo($method_logo)
