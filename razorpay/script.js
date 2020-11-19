@@ -68,6 +68,7 @@ document.addEventListener('DOMContentLoaded', function(event) {
         integration_version: defaults.module_version,
         integration_parent_version: defaults.ps_version
       },
+      callback_url: defaults.action_controller,
       handler: function(obj) {
         clearInterval(intervalId);
 
