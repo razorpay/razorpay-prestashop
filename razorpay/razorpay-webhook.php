@@ -136,6 +136,61 @@ class RZP_Webhook
     {
         // reference_no (prestashop_cart_id) should be passed in payload
         $cartId = $data['payload']['payment']['entity']['notes']['prestashop_cart_id'];
+        $rzpOrderId = $data['payload']['order']['entity']['id'];
+        $razorpayPaymentId = $data['payload']['payment']['entity']['id'];
+
+        $db = \Db::getInstance();
+
+        //verify to entry to razorpay_sales_order table
+        $request = "SELECT `entity_id`, `order_placed`, `webhook_count`, `order_id`, `webhook_first_notified_at` FROM `razorpay_sales_order` WHERE cart_id =  $cartId  AND rzp_order_id = '" . $rzpOrderId ."'";
+
+        $salesOrderData = $db->getRow($request);
+
+        if(empty($salesOrderData['entity_id']) === false)
+        {
+
+            if ($salesOrderData['order_placed'])
+            {
+                 Logger::addLog("Razorpay Webhook: Quote order is inactive for cartID: $cartId and Razorpay payment_id(:$razorpayPaymentId) with PrestaShop OrderID (:" . $salesOrderData['increment_order_id'] . ") ", 4);
+
+                //return;
+            }
+
+            $setWebhookFirstNotifiedQuery =  "UPDATE `razorpay_sales_order` SET ";
+
+            //set the 1st webhook notification time
+            if ($salesOrderData['webhook_count'] < 1)
+            {
+                $firstNotifiedTime = time();
+
+                $setWebhookFirstNotifiedQuery .= "webhook_first_notified_at = " . $firstNotifiedTime . ",
+                            rzp_payment_id = '$razorpayPaymentId',";
+            }
+            else
+            {
+               $firstNotifiedTime = $salesOrderData['webhook_first_notified_at'];
+            }
+
+            $setWebhookFirstNotifiedQuery .= " webhook_count = " . ($salesOrderData['webhook_count'] + 1);
+
+            $setWebhookFirstNotifiedQuery .= " WHERE entity_id = " . $salesOrderData['entity_id'];
+
+            $db->execute($setWebhookFirstNotifiedQuery);
+
+
+            $webhookWaitTime = Configuration::get('RAZORPAY_WEBHOOK_WAIT_TIME') ? Configuration::get('RAZORPAY_WEBHOOK_WAIT_TIME') : 300;
+
+            //ignore webhook call for some time as per config, from first webhook call
+            if ((time() - $firstNotifiedTime) < $webhookWaitTime)
+            {
+                Logger::addLog("Razorpay Webhook: Order processing is active for cartID: $cartId and Razorpay payment_id(:$razorpayPaymentId) and webhook attempt: " . ($salesOrderData['webhook_count'] + 1), 4);
+
+                header('Status: 409 Conflict, too early for processing', true, 409);
+
+                exit;
+            }
+
+        }
 
         // check if a order already present for this cart
         $cart = new Cart($cartId);
@@ -229,6 +284,26 @@ class RZP_Webhook
             } catch (\Razorpay\Api\Errors\BadRequestError $e){
                 $error = $e->getMessage();
                 Logger::addLog("Razorpay payment notes update failed for the webhook of Razorpay payment id: ".$razorpayPaymentId. "with the Error ".$error, 4);
+            }
+
+            //add to entry to razorpay_sales_order table
+            $request = "SELECT `entity_id` FROM `razorpay_sales_order` WHERE cart_id = " . $cart->id .
+                        " AND rzp_order_id = '" . $rzpOrderId ."'";
+
+            $salesOrderId = $db->getValue($request);
+
+            if(empty($salesOrderId) === false)
+            {
+               $request =  "UPDATE `razorpay_sales_order`
+                            SET rzp_payment_id = '$razorpayPaymentId',
+                            order_id = " . $this->razorpay->currentOrder . ",
+                            by_webhook = 1,
+                            order_placed = 1
+                            WHERE cart_id = " . $cart->id . " AND entity_id = $salesOrderId";
+
+                $result = $db->execute($request);
+
+                Logger::addLog("Record inserted in razorpay_sales_order table ", 4);
             }
 
         }
