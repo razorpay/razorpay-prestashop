@@ -258,6 +258,9 @@ class RZP_Webhook
              */
 
             $razorpayPaymentId = $data['payload']['payment']['entity']['id'];
+
+            $amount_paid = number_format($data['payload']['payment']['entity']['amount']/100, "2", ".", "");
+
             $extraData = array(
                 'transaction_id'    =>  $razorpayPaymentId,
             );
@@ -287,8 +290,8 @@ class RZP_Webhook
             }
 
             //add to entry to razorpay_sales_order table
-            $request = "SELECT `entity_id` FROM `razorpay_sales_order` WHERE cart_id = " . $cart->id .
-                        " AND rzp_order_id = '" . $rzpOrderId ."'";
+            $request = "SELECT `entity_id` FROM `razorpay_sales_order` WHERE `cart_id` = " . $cart->id .
+                        " AND `rzp_order_id` = '" . $rzpOrderId ."'";
 
             $salesOrderId = $db->getValue($request);
 
@@ -296,6 +299,7 @@ class RZP_Webhook
             {
                $request =  "UPDATE `razorpay_sales_order`
                             SET rzp_payment_id = '$razorpayPaymentId',
+                            `amount_paid` = $amount_paid,
                             order_id = " . $this->razorpay->currentOrder . ",
                             by_webhook = 1,
                             order_placed = 1

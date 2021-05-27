@@ -240,11 +240,11 @@ class Razorpay extends PaymentModule
         $result = $db->executeS("
             CREATE TABLE  IF NOT EXISTS `razorpay_sales_order` (
           `entity_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Entity_id',
-          `cart_id` int(11) DEFAULT NULL COMMENT 'Quote_id',
+          `cart_id` int(11) DEFAULT NULL COMMENT 'cart_id',
           `order_id` int(11) DEFAULT NULL COMMENT 'Order_id',
-          `increment_order_id` varchar(32) DEFAULT NULL COMMENT 'Increment_order_id',
           `rzp_order_id` varchar(25) DEFAULT NULL COMMENT 'Rzp_order_id',
           `rzp_payment_id` varchar(25) DEFAULT NULL COMMENT 'Rzp_payment_id',
+          `amount_paid` decimal(20,2) NOT NULL,
           `by_webhook` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'By_webhook',
           `by_frontend` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'By_frontend',
           `webhook_count` smallint(6) NOT NULL DEFAULT '0' COMMENT 'Webhook_count',
@@ -252,7 +252,7 @@ class Razorpay extends PaymentModule
           `webhook_first_notified_at` bigint(20) DEFAULT NULL COMMENT 'Webhook_first_notified_at',
           PRIMARY KEY (`entity_id`),
           UNIQUE KEY `cart_id` (`cart_id`,`rzp_payment_id`),
-          UNIQUE KEY `increment_order_id` (`increment_order_id`)
+          UNIQUE KEY `order_id` (`order_id`)
         ) ENGINE=" . _MYSQL_ENGINE_ . " DEFAULT CHARSET=utf8 COMMENT='razorpay_sales_order'
         ");
 

@@ -132,14 +132,17 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
 
             $order_sales_id = $db->getValue($request);
 
+            $amount_paid = number_format($payment->amount/100, "2", ".", "");
+
             if(empty($order_sales_id) === false)
             {
                $request =  "UPDATE `razorpay_sales_order`
-                            SET rzp_payment_id = '$paymentId',
-                            order_id = " . $this->module->currentOrder . ",
-                            by_frontend = 1,
-                            order_placed = 1
-                            WHERE cart_id = " . $cart->id . " AND entity_id = $order_sales_id";
+                            SET `rzp_payment_id` = '$paymentId',
+                            `amount_paid` = $amount_paid,
+                            `order_id` = " . $this->module->currentOrder . ",
+                            `by_frontend` = 1,
+                            `order_placed` = 1
+                            WHERE `cart_id` = " . $cart->id . " AND `entity_id` = $order_sales_id";
 
                 $result = $db->execute($request);
 
