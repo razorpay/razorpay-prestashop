@@ -39,7 +39,8 @@ class Razorpay extends PaymentModule
             'RAZORPAY_KEY_SECRET',
             'RAZORPAY_PAYMENT_ACTION',
             'ENABLE_RAZORPAY_WEBHOOK',
-            'RAZORPAY_WEBHOOK_SECRET'
+            'RAZORPAY_WEBHOOK_SECRET',
+            'RAZORPAY_WEBHOOK_WAIT_TIME'
         ]);
 
         if (array_key_exists('RAZORPAY_KEY_ID', $config))
@@ -65,6 +66,11 @@ class Razorpay extends PaymentModule
         if (array_key_exists('RAZORPAY_WEBHOOK_SECRET', $config))
         {
             $this->WEBHOOK_SECRET = $config['RAZORPAY_WEBHOOK_SECRET'];
+        }
+
+        if (array_key_exists('RAZORPAY_WEBHOOK_WAIT_TIME', $config))
+        {
+            $this->WEBHOOK_WAIT_TIME = $config['RAZORPAY_WEBHOOK_WAIT_TIME'];
         }
 
         parent::__construct();
@@ -122,6 +128,8 @@ class Razorpay extends PaymentModule
         $modWebhookSecret = $this->WEBHOOK_SECRET;
         $modEnableWebhookLabel = $this->l('Enable Webhook');
         $modWebhookSecretLabel = $this->l('Webhook Secret');
+        $modWebhookWithTimeLabel = $this->l('Webhook Wait Time');
+        $modWebhookWaitTime = $this->WEBHOOK_WAIT_TIME ? $this->WEBHOOK_WAIT_TIME : 300;
 
         $modPayActionCaptureLabel = $this->l('Authorize and Capture');
         $modPayActionAuthorizeLabel = $this->l('Authorize');
@@ -134,6 +142,8 @@ class Razorpay extends PaymentModule
 
         $modWebhookDescription = $this->l('Enable Razorpay Webhook at https://dashboard.razorpay.com/#/app/webhooks with the URL '. $webhookUrl);
         $modWebhookSecretDescription = $this->l('Webhook secret is used for webhook signature verification. This has to match the one added at https://dashboard.razorpay.com/#/app/webhooks');
+
+        $modWebhookWaitTimeDescription = $this->l('Required (Set the time in seconds, that webhook wait before creating a order from the backend for missed razorpay captured payments. )');
 
         $this->_html .=
         "
@@ -190,6 +200,12 @@ class Razorpay extends PaymentModule
                                         </td>
                                 </tr>
                                 <tr>
+                                        <td width='130' title='{$modWebhookWaitTimeDescription}'>{$modWebhookWithTimeLabel}</td>
+                                        <td>
+                                                <input type='text' name='WEBHOOK_WAIT_TIME' value='{$modWebhookWaitTime}' style='width: 300px;'/>
+                                        </td>
+                                </tr>
+                                <tr>
                                         <td colspan='2' align='center'>
                                                 <input class='button' name='btnSubmit' value='{$modUpdateSettings}' type='submit' />
                                         </td>
@@ -219,6 +235,28 @@ class Razorpay extends PaymentModule
 
     public function install()
     {
+        $db = \Db::getInstance();
+
+        $result = $db->executeS("
+            CREATE TABLE  IF NOT EXISTS `razorpay_sales_order` (
+          `entity_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Entity_id',
+          `cart_id` int(11) DEFAULT NULL COMMENT 'cart_id',
+          `order_id` int(11) DEFAULT NULL COMMENT 'Order_id',
+          `rzp_order_id` varchar(25) DEFAULT NULL COMMENT 'Rzp_order_id',
+          `rzp_payment_id` varchar(25) DEFAULT NULL COMMENT 'Rzp_payment_id',
+          `amount_paid` decimal(20,2) NOT NULL,
+          `by_webhook` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'By_webhook',
+          `by_frontend` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'By_frontend',
+          `webhook_count` smallint(6) NOT NULL DEFAULT '0' COMMENT 'Webhook_count',
+          `order_placed` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Order_placed',
+          `webhook_first_notified_at` bigint(20) DEFAULT NULL COMMENT 'Webhook_first_notified_at',
+          PRIMARY KEY (`entity_id`),
+          UNIQUE KEY `cart_id` (`cart_id`,`rzp_payment_id`),
+          UNIQUE KEY `order_id` (`order_id`)
+        ) ENGINE=" . _MYSQL_ENGINE_ . " DEFAULT CHARSET=utf8 COMMENT='razorpay_sales_order'
+        ");
+
+
         if (parent::install() and
             $this->registerHook('header') and
             $this->registerHook('orderConfirmation') and
@@ -312,6 +350,11 @@ class Razorpay extends PaymentModule
         Configuration::deleteByName('RAZORPAY_PAYMENT_ACTION');
         Configuration::deleteByName('ENABLE_RAZORPAY_WEBHOOK');
         Configuration::deleteByName('RAZORPAY_WEBHOOK_SECRET');
+        Configuration::deleteByName('RAZORPAY_WEBHOOK_WAIT_TIME');
+
+        $db = \Db::getInstance();
+
+        $result = $db->executeS("DROP TABLE IF EXISTS `razorpay_sales_order`");
 
         return parent::uninstall();
     }
@@ -397,12 +440,16 @@ class Razorpay extends PaymentModule
             Configuration::updateValue('RAZORPAY_PAYMENT_ACTION', Tools::getValue('PAYMENT_ACTION'));
             Configuration::updateValue('ENABLE_RAZORPAY_WEBHOOK', Tools::getValue('ENABLE_WEBHOOK'));
             Configuration::updateValue('RAZORPAY_WEBHOOK_SECRET', Tools::getValue('WEBHOOK_SECRET'));
+            //default is 300 seconds
+            $webhookWaitTime = Tools::getValue('WEBHOOK_WAIT_TIME') ? Tools::getValue('WEBHOOK_WAIT_TIME') : 300;
+            Configuration::updateValue('RAZORPAY_WEBHOOK_WAIT_TIME', $webhookWaitTime);
 
             $this->KEY_ID= Tools::getValue('KEY_ID');
             $this->KEY_SECRET= Tools::getValue('KEY_SECRET');
             $this->PAYMENT_ACTION= Tools::getValue('PAYMENT_ACTION');
             $this->ENABLE_WEBHOOK= Tools::getValue('ENABLE_WEBHOOK');
             $this->WEBHOOK_SECRET= Tools::getValue('WEBHOOK_SECRET');
+            $this->WEBHOOK_WAIT_TIME= $webhookWaitTime;
         }
 
         $this->_html .= $this->displayConfirmation($this->trans('Settings updated', array(), 'Admin.Notifications.Success'));

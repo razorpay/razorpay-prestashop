@@ -45,6 +45,29 @@ class RazorpayOrderModuleFrontController extends ModuleFrontController
 
                 session_start();
                 $_SESSION['rzp_order_id'] = $order->id;
+
+                //save the entry to razorpay_sales_order table
+
+                $db = \Db::getInstance();
+
+                $request = "SELECT `entity_id` FROM `razorpay_sales_order` WHERE `cart_id` = ".$this->context->cart->id;
+
+                $order_sales_id = $db->getValue($request);
+
+                if(empty($order_sales_id) === true)
+                {
+                    $request = "INSERT INTO `razorpay_sales_order` (`cart_id`, `rzp_order_id`) VALUES (".$this->context->cart->id . ",'" . $order->id . "')";
+
+                    $result = $db->execute($request);
+                    Logger::addLog("Record inserted in razorpay_sales_order table cart_id : " . $this->context->cart->id, 4);
+                }
+                else
+                {
+                    $request = "UPDATE `razorpay_sales_order` SET `cart_id` = ".$this->context->cart->id .", `rzp_order_id` = '" . $order->id . "' WHERE `entity_id` = $order_sales_id";
+
+                    $result = $db->execute($request);
+                    Logger::addLog("Record updated in razorpay_sales_order table for $order_sales_id", 4);
+                }
             }
 
         }

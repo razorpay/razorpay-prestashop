@@ -124,6 +124,31 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
                 $customer->secure_key
             );
 
+            //add to entry to razorpay_sales_order table
+            $db = \Db::getInstance();
+
+            $request = "SELECT `entity_id` FROM `razorpay_sales_order` WHERE `cart_id` = " . $cart->id .
+                       " AND `rzp_order_id` = '" . $_SESSION['rzp_order_id'] ."'";
+
+            $order_sales_id = $db->getValue($request);
+
+            $amount_paid = number_format($payment->amount/100, "2", ".", "");
+
+            if(empty($order_sales_id) === false)
+            {
+               $request =  "UPDATE `razorpay_sales_order`
+                            SET `rzp_payment_id` = '$paymentId',
+                            `amount_paid` = $amount_paid,
+                            `order_id` = " . $this->module->currentOrder . ",
+                            `by_frontend` = 1,
+                            `order_placed` = 1
+                            WHERE `cart_id` = " . $cart->id . " AND `entity_id` = $order_sales_id";
+
+                $result = $db->execute($request);
+
+                Logger::addLog("Record inserted in razorpay_sales_order table ", 4);
+            }
+
             Logger::addLog("Payment Successful for Order#".$cart->id.". Razorpay payment id: ".$paymentId . "Ret=" . (int)$ret, 1);
 
             $query = http_build_query([
