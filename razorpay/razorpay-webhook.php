@@ -142,7 +142,7 @@ class RZP_Webhook
         $db = \Db::getInstance();
 
         //verify to entry to razorpay_sales_order table
-        $request = "SELECT `entity_id`, `order_placed`, `webhook_count`, `order_id`, `webhook_first_notified_at` FROM `razorpay_sales_order` WHERE cart_id =  $cartId  AND rzp_order_id = '" . $rzpOrderId ."'";
+        $request = "SELECT `entity_id`, `order_placed`, `webhook_count`, `order_id`, `webhook_first_notified_at` FROM `razorpay_sales_order` WHERE `cart_id` =  $cartId  AND `rzp_order_id` = '" . $rzpOrderId ."'";
 
         $salesOrderData = $db->getRow($request);
 
@@ -163,17 +163,17 @@ class RZP_Webhook
             {
                 $firstNotifiedTime = time();
 
-                $setWebhookFirstNotifiedQuery .= "webhook_first_notified_at = " . $firstNotifiedTime . ",
-                            rzp_payment_id = '$razorpayPaymentId',";
+                $setWebhookFirstNotifiedQuery .= "`webhook_first_notified_at` = " . $firstNotifiedTime . ",
+                            `rzp_payment_id` = '$razorpayPaymentId',";
             }
             else
             {
                $firstNotifiedTime = $salesOrderData['webhook_first_notified_at'];
             }
 
-            $setWebhookFirstNotifiedQuery .= " webhook_count = " . ($salesOrderData['webhook_count'] + 1);
+            $setWebhookFirstNotifiedQuery .= " `webhook_count` = " . ($salesOrderData['webhook_count'] + 1);
 
-            $setWebhookFirstNotifiedQuery .= " WHERE entity_id = " . $salesOrderData['entity_id'];
+            $setWebhookFirstNotifiedQuery .= " WHERE `entity_id` = " . $salesOrderData['entity_id'];
 
             $db->execute($setWebhookFirstNotifiedQuery);
 
@@ -298,12 +298,12 @@ class RZP_Webhook
             if(empty($salesOrderId) === false)
             {
                $request =  "UPDATE `razorpay_sales_order`
-                            SET rzp_payment_id = '$razorpayPaymentId',
+                            SET `rzp_payment_id` = '$razorpayPaymentId',
                             `amount_paid` = $amount_paid,
-                            order_id = " . $this->razorpay->currentOrder . ",
-                            by_webhook = 1,
-                            order_placed = 1
-                            WHERE cart_id = " . $cart->id . " AND entity_id = $salesOrderId";
+                            `order_id` = " . $this->razorpay->currentOrder . ",
+                            `by_webhook` = 1,
+                            `order_placed` = 1
+                            WHERE `cart_id` = " . $cart->id . " AND `entity_id` = $salesOrderId";
 
                 $result = $db->execute($request);
 

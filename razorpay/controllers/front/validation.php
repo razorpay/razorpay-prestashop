@@ -127,8 +127,8 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
             //add to entry to razorpay_sales_order table
             $db = \Db::getInstance();
 
-            $request = "SELECT `entity_id` FROM `razorpay_sales_order` WHERE cart_id = " . $cart->id .
-                       " AND rzp_order_id = '" . $_SESSION['rzp_order_id'] ."'";
+            $request = "SELECT `entity_id` FROM `razorpay_sales_order` WHERE `cart_id` = " . $cart->id .
+                       " AND `rzp_order_id` = '" . $_SESSION['rzp_order_id'] ."'";
 
             $order_sales_id = $db->getValue($request);
 

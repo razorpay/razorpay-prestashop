@@ -50,7 +50,7 @@ class RazorpayOrderModuleFrontController extends ModuleFrontController
 
                 $db = \Db::getInstance();
 
-                $request = "SELECT `entity_id` FROM `razorpay_sales_order` WHERE cart_id = ".$this->context->cart->id;
+                $request = "SELECT `entity_id` FROM `razorpay_sales_order` WHERE `cart_id` = ".$this->context->cart->id;
 
                 $order_sales_id = $db->getValue($request);
 
@@ -63,7 +63,7 @@ class RazorpayOrderModuleFrontController extends ModuleFrontController
                 }
                 else
                 {
-                    $request = "UPDATE `razorpay_sales_order` SET `cart_id` = ".$this->context->cart->id .", `rzp_order_id` = '" . $order->id . "' WHERE entity_id = $order_sales_id";
+                    $request = "UPDATE `razorpay_sales_order` SET `cart_id` = ".$this->context->cart->id .", `rzp_order_id` = '" . $order->id . "' WHERE `entity_id` = $order_sales_id";
 
                     $result = $db->execute($request);
                     Logger::addLog("Record updated in razorpay_sales_order table for $order_sales_id", 4);
