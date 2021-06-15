@@ -1,7 +1,6 @@
 <?php
 
 require_once __DIR__.'/razorpay-sdk/Razorpay.php';
-require_once __DIR__.'/razorpay-webhook.php';
 
 use PrestaShop\PrestaShop\Core\Payment\PaymentOption;
 use PrestaShop\PrestaShop\Adapter\Cart\CartPresenter;
@@ -21,6 +20,14 @@ class Razorpay extends PaymentModule
     const RAZORPAY_CHECKOUT_URL = 'https://checkout.razorpay.com/v1/checkout.js';
     const CAPTURE               = 'capture';
     const AUTHORIZE             = 'authorize';
+
+    /**
+     * Event constants
+     */
+    const PAYMENT_AUTHORIZED    = 'payment.authorized';
+    const PAYMENT_FAILED        = 'payment.failed';
+    const ORDER_PAID            = 'order.paid';
+
 
     public function __construct()
     {
@@ -151,9 +158,9 @@ class Razorpay extends PaymentModule
 
             'modPayActionAuthorizeSelected' => ($this->PAYMENT_ACTION === self::AUTHORIZE) ? "selected = 'selected'" : "",
 
-            'modOrderPaidEvent'             => RZP_Webhook::ORDER_PAID,
+            'modOrderPaidEvent'             => self::ORDER_PAID,
 
-            'modEventOrderPaidSelected'     => ($this->RAZORPAY_WEBHOOK_EVENTS == RZP_Webhook::ORDER_PAID) ? "selected = 'selected'" : "",
+            'modEventOrderPaidSelected'     => ($this->RAZORPAY_WEBHOOK_EVENTS == self::ORDER_PAID) ? "selected = 'selected'" : "",
 
             'webhookUrl'                    => $this->context->link->getModuleLink('razorpay', 'webhook', [], true),
 
@@ -453,15 +460,18 @@ class Razorpay extends PaymentModule
 
         $webhook = $this->webhookAPI("GET", "webhooks");
 
-        foreach ($webhook['items'] as $key => $value) 
+        if(isset($webhook['count']) & $webhook['count'] > 0)
         {
-            if($value['url'] === $webhookUrl)
+            foreach ($webhook['items'] as $key => $value) 
             {
-                $webhookExist  = true;
-                $webhookId     = $value['id'];
+                if($value['url'] === $webhookUrl)
+                {
+                    $webhookExist  = true;
+                    $webhookId     = $value['id'];
+                }
             }
         }
-
+        
         if($webhookExist)
         {
             $this->webhookAPI('PUT', "webhooks/".$webhookId, $data);
