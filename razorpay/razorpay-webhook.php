@@ -151,9 +151,9 @@ class RZP_Webhook
 
             if ($salesOrderData['order_placed'])
             {
-                 Logger::addLog("Razorpay Webhook: Quote order is inactive for cartID: $cartId and Razorpay payment_id(:$razorpayPaymentId) with PrestaShop OrderID (:" . $salesOrderData['increment_order_id'] . ") ", 4);
+                 Logger::addLog("Razorpay Webhook: Quote order is inactive for cartID: $cartId and Razorpay payment_id(:$razorpayPaymentId) with PrestaShop OrderID (:" . $salesOrderData['order_id'] . ") ", 4);
 
-                //return;
+                return;
             }
 
             $setWebhookFirstNotifiedQuery =  "UPDATE `razorpay_sales_order` SET ";
