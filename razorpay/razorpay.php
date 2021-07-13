@@ -389,7 +389,6 @@ class Razorpay extends PaymentModule
             $this->KEY_ID= Tools::getValue('KEY_ID');
             $this->KEY_SECRET= Tools::getValue('KEY_SECRET');
             $this->PAYMENT_ACTION= Tools::getValue('PAYMENT_ACTION');
-            $this->ENABLE_WEBHOOK= Tools::getValue('ENABLE_WEBHOOK');
             $this->WEBHOOK_EVENTS= Tools::getValue('EVENTS');
             $this->WEBHOOK_SECRET= Tools::getValue('WEBHOOK_SECRET');
             $this->WEBHOOK_WAIT_TIME= $webhookWaitTime;
@@ -417,12 +416,22 @@ class Razorpay extends PaymentModule
             }
         }
 
-        if(in_array($_SERVER['SERVER_ADDR'], ["127.0.0.1","::1"]))
+        $domain = parse_url($webhookUrl, PHP_URL_HOST);
+
+        $domain_ip = gethostbyname($domain);
+
+        if (!filter_var($domain_ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) && Tools::getValue('ENABLE_WEBHOOK') == 'on')
         {
+            Configuration::updateValue('ENABLE_RAZORPAY_WEBHOOK', $this->ENABLE_WEBHOOK);
+
             Logger::addLog('Could not enable webhook for localhost', 4);
+
+            $this->_html .= $this->displayError($this->trans('Webhook cant be set for localhost server.', array(), 'Admin.Notifications.Warning'));
 
             return;
         }
+
+        $this->ENABLE_WEBHOOK= Tools::getValue('ENABLE_WEBHOOK');
 
         if($this->ENABLE_WEBHOOK == null)
         {
