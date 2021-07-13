@@ -20,13 +20,6 @@ class RZP_Webhook
      */
     protected $api;
 
-    /**
-     * Event constants
-     */
-    const PAYMENT_AUTHORIZED    = 'payment.authorized';
-    const PAYMENT_FAILED        = 'payment.failed';
-    const ORDER_PAID            = 'order.paid';
-
     function __construct()
     {
         $this->razorpay = new Razorpay(false);
@@ -91,13 +84,13 @@ class RZP_Webhook
 
                     switch ($data['event'])
                     {
-                        case self::PAYMENT_AUTHORIZED:
+                        case Razorpay::PAYMENT_AUTHORIZED:
                             return $this->paymentAuthorized($data);
 
-                        case self::PAYMENT_FAILED:
+                        case Razorpay::PAYMENT_FAILED:
                             return $this->paymentFailed($data);
 
-                        case self::ORDER_PAID:
+                        case Razorpay::ORDER_PAID:
                             return $this->orderPaid($data);
 
                         default:

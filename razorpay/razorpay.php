@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__.'/razorpay-sdk/Razorpay.php';
+
 use PrestaShop\PrestaShop\Core\Payment\PaymentOption;
 use PrestaShop\PrestaShop\Adapter\Cart\CartPresenter;
 use Razorpay\Api\Api;
@@ -8,37 +9,46 @@ use Razorpay\Api\Api;
 class Razorpay extends PaymentModule
 {
     // Manages the display in the admin panel
-    private $_html = '';
-    private $KEY_ID = null;
-    private $KEY_SECRET = null;
+    private $_html         = '';
+    private $KEY_ID        = null;
+    private $KEY_SECRET    = null;
     public $ENABLE_WEBHOOK = null;
     public $WEBHOOK_SECRET = null;
 
-    private $_postErrors = [];
+    private $_postErrors   = [];
 
     const RAZORPAY_CHECKOUT_URL = 'https://checkout.razorpay.com/v1/checkout.js';
-    const CAPTURE = 'capture';
-    const AUTHORIZE = 'authorize';
+    const CAPTURE               = 'capture';
+    const AUTHORIZE             = 'authorize';
+
+    /**
+     * Event constants
+     */
+    const PAYMENT_AUTHORIZED    = 'payment.authorized';
+    const PAYMENT_FAILED        = 'payment.failed';
+    const ORDER_PAID            = 'order.paid';
+
 
     public function __construct()
     {
-        $this->controllers = ['validation'];
-        $this->name = 'razorpay';
-        $this->displayName = 'Razorpay';
-        $this->tab = 'payments_gateways';
-        $this->version = '2.4.1';
-        $this->need_instance = 1;
+        $this->controllers            = ['validation'];
+        $this->name                   = 'razorpay';
+        $this->displayName            = 'Razorpay';
+        $this->tab                    = 'payments_gateways';
+        $this->version                = '2.5.0';
+        $this->need_instance          = 1;
         $this->ps_versions_compliancy = ['min' => '1.7.0.0', 'max' => _PS_VERSION_];
-        $this->display = true;
+        $this->display                = true;
 
-        $this->author = 'Team Razorpay';
-        $this->module_key = '084fe8aecafea8b2f84cca493377eb9b';
+        $this->author                 = 'Team Razorpay';
+        $this->module_key             = '084fe8aecafea8b2f84cca493377eb9b';
 
         $config = Configuration::getMultiple([
             'RAZORPAY_KEY_ID',
             'RAZORPAY_KEY_SECRET',
             'RAZORPAY_PAYMENT_ACTION',
             'ENABLE_RAZORPAY_WEBHOOK',
+            'RAZORPAY_WEBHOOK_EVENTS',
             'RAZORPAY_WEBHOOK_SECRET',
             'RAZORPAY_WEBHOOK_WAIT_TIME'
         ]);
@@ -63,6 +73,11 @@ class Razorpay extends PaymentModule
             $this->ENABLE_WEBHOOK = $config['ENABLE_RAZORPAY_WEBHOOK'];
         }
 
+        if (array_key_exists('RAZORPAY_WEBHOOK_EVENTS', $config))
+        {
+            $this->RAZORPAY_WEBHOOK_EVENTS = $config['RAZORPAY_WEBHOOK_EVENTS'];
+        }
+
         if (array_key_exists('RAZORPAY_WEBHOOK_SECRET', $config))
         {
             $this->WEBHOOK_SECRET = $config['RAZORPAY_WEBHOOK_SECRET'];
@@ -82,16 +97,18 @@ class Razorpay extends PaymentModule
         // Both are set to NULL by default
         if ($this->KEY_ID === null OR $this->KEY_SECRET === null)
         {
-            $this->warning = $this->l('your Razorpay key must be configured in order to use this module correctly');
+            $this->warning = $this->l('Your Razorpay key must be configured in order to use this module correctly');
         }
     }
 
     public function getContent()
     {
-        $this->_html = '<h2>'.$this->displayName.'</h2>';
+        $this->_html = '';
+
         if (Tools::isSubmit('btnSubmit'))
         {
             $this->_postValidation();
+
             if (empty($this->_postErrors))
             {
                 $this->_postProcess();
@@ -100,7 +117,7 @@ class Razorpay extends PaymentModule
             {
                 foreach ($this->_postErrors AS $err)
                 {
-                    $this->_html .= "<div class='alert error'>ERROR: {$err}</div>";
+                    $this->_html .= "<div class='alert error'>{$err}</div>";
                 }
             }
         }
@@ -117,120 +134,43 @@ class Razorpay extends PaymentModule
 
     private function _displayForm()
     {
-        $modrazorpay                = $this->l('Razorpay Setup');
-        $modrazorpayDesc        = $this->l('Please specify the Razorpay Key Id and Key Secret.');
-        $modClientLabelKeyId      = $this->l('Razorpay Key Id');
-        $modClientLabelKeySecret       = $this->l('Razorpay Key Secret');
-        $modClientValueKeyId      = $this->KEY_ID;
-        $modClientValueKeySecret       = $this->KEY_SECRET;
-        $modUpdateSettings      = $this->l('Update settings');
-        $modEnableWebhook = ($this->ENABLE_WEBHOOK  === 'on') ? 'checked' : '';
-        $modWebhookSecret = $this->WEBHOOK_SECRET;
-        $modEnableWebhookLabel = $this->l('Enable Webhook');
-        $modWebhookSecretLabel = $this->l('Webhook Secret');
-        $modWebhookWithTimeLabel = $this->l('Webhook Wait Time');
-        $modWebhookWaitTime = $this->WEBHOOK_WAIT_TIME ? $this->WEBHOOK_WAIT_TIME : 300;
+        $this->smarty->assign([
+            'modrazorpay'                   => $this->l('Razorpay Setup'),
+            'modrazorpayDesc'               => $this->l('Please specify the Razorpay Key Id and Key Secret.'),
+            'modClientLabelKeyId'           => $this->l('Razorpay Key Id'),
+            'modClientLabelKeySecret'       => $this->l('Razorpay Key Secret'),
+            'modClientValueKeyId'           => $this->KEY_ID,
+            'modClientValueKeySecret'       => $this->KEY_SECRET,
+            'modUpdateSettings'             => $this->l('Update settings'),
+            'modEnableWebhook'              => ($this->ENABLE_WEBHOOK  === 'on') ? 'checked' : '',
+            'modWebhookSecret'              => $this->WEBHOOK_SECRET,
+            'modEnableWebhookLabel'         => $this->l('Enable Webhook'),
+            'modEnableWebhookEventsLabel'   => $this->l('Enable Webhook Events'),
+            'modWebhookSecretLabel'         => $this->l('Webhook Secret'),
+            'modWebhookWithTimeLabel'       => $this->l('Webhook Wait Time'),
+            'modWebhookWaitTime'            => $this->WEBHOOK_WAIT_TIME ? $this->WEBHOOK_WAIT_TIME : 300,
+            'modPayActionCaptureLabel'      => $this->l('Authorize and Capture'),
+            'modPayActionAuthorizeLabel'    => $this->l('Authorize'),
+            'modPayActionCapture'           => self::CAPTURE,
+            'modPayActionAuthorize'         => self::AUTHORIZE,
 
-        $modPayActionCaptureLabel = $this->l('Authorize and Capture');
-        $modPayActionAuthorizeLabel = $this->l('Authorize');
-        $modPayActionCapture = self::CAPTURE;
-        $modPayActionAuthorize = self::AUTHORIZE;
-        $modPayActionCaptureSelected = ($this->PAYMENT_ACTION === self::CAPTURE || !$this->PAYMENT_ACTION) ? "selected = 'selected'" : "";
-        $modPayActionAuthorizeSelected = ($this->PAYMENT_ACTION === self::AUTHORIZE) ? "selected = 'selected'" : "";
+            'modPayActionCaptureSelected'   => ($this->PAYMENT_ACTION === self::CAPTURE || !$this->PAYMENT_ACTION) ? "selected = 'selected'" : "",
 
-        $webhookUrl = $this->context->link->getModuleLink('razorpay', 'webhook', [], true);
+            'modPayActionAuthorizeSelected' => ($this->PAYMENT_ACTION === self::AUTHORIZE) ? "selected = 'selected'" : "",
 
-        $modWebhookDescription = $this->l('Enable Razorpay Webhook at https://dashboard.razorpay.com/#/app/webhooks with the URL '. $webhookUrl);
-        $modWebhookSecretDescription = $this->l('Webhook secret is used for webhook signature verification. This has to match the one added at https://dashboard.razorpay.com/#/app/webhooks');
+            'modOrderPaidEvent'             => self::ORDER_PAID,
 
-        $modWebhookWaitTimeDescription = $this->l('Required (Set the time in seconds, that webhook wait before creating a order from the backend for missed razorpay captured payments. )');
+            'modEventOrderPaidSelected'     => ($this->RAZORPAY_WEBHOOK_EVENTS == self::ORDER_PAID) ? "selected = 'selected'" : "",
 
-        $this->_html .=
-        "
-        <br />
-        <br />
-        <p><form action='{$_SERVER['REQUEST_URI']}' method='post'>
-                <fieldset>
-                <legend><img src='../img/admin/edit.gif' />{$modrazorpay}</legend>
-                        <table border='0' width='500' cellpadding='0' cellspacing='0' id='form'>
-                                <tr>
-                                        <td colspan='2'>
-                                                {$modrazorpayDesc}<br /><br />
-                                        </td>
-                                </tr>
-                                <tr>
-                                        <td width='130'>{$modClientLabelKeyId}</td>
-                                        <td>
-                                                <input type='text' name='KEY_ID' value='{$modClientValueKeyId}' style='width: 300px;' />
-                                        </td>
-                                </tr>
-                                <tr>
-                                        <td width='130'>{$modClientLabelKeySecret}</td>
-                                        <td>
-                                                <input type='text' name='KEY_SECRET' value='{$modClientValueKeySecret}' style='width: 300px;' />
-                                        </td>
-                                </tr>
-                                <tr>
-                                        <td width='130'>Payment Action</td>
-                                        <td>
-                                                <select name='PAYMENT_ACTION' style='margin:3px 0px;'>
-                                                    <option value='{$modPayActionAuthorize}' $modPayActionAuthorizeSelected >{$modPayActionAuthorizeLabel}</option>
-                                                    <option value='{$modPayActionCapture}' $modPayActionCaptureSelected >{$modPayActionCaptureLabel}</option>
-                                                </selet>
-                                        </td>
-                                </tr>
-                                <tr>
-                                        <td width='130' title='{$modWebhookDescription}'>{$modEnableWebhookLabel}</td>
-                                        <td>
-                                                <input type='checkbox' name='ENABLE_WEBHOOK' style='width: 300px;' {$modEnableWebhook} />
-                                        </td>
-                                </tr>
-                                <tr>
-                                        <td width='130'>Webhook Url</td>
-                                        <td style='padding:5px 0;'>
-                                            <span style='width:300px;font-weight: bold;' class='webhook-url' >{$webhookUrl}</span>
-                                            <span class='copy-to-clipboard'
-                                            style='background-color: #337ab7; color: white; border: none;cursor: pointer; padding: 2px 4px; text-decoration: none;'>Copy</span>
-                                        </td>
-                                </tr>
-                                <tr>
-                                        <td width='130' title='{$modWebhookSecretDescription}'>{$modWebhookSecretLabel}</td>
-                                        <td>
-                                                <input type='text' name='WEBHOOK_SECRET' value='{$modWebhookSecret}' style='width: 300px;'/>
-                                        </td>
-                                </tr>
-                                <tr>
-                                        <td width='130' title='{$modWebhookWaitTimeDescription}'>{$modWebhookWithTimeLabel}</td>
-                                        <td>
-                                                <input type='text' name='WEBHOOK_WAIT_TIME' value='{$modWebhookWaitTime}' style='width: 300px;'/>
-                                        </td>
-                                </tr>
-                                <tr>
-                                        <td colspan='2' align='center'>
-                                                <input class='button' name='btnSubmit' value='{$modUpdateSettings}' type='submit' />
-                                        </td>
-                                </tr>
-                        </table>
-                </fieldset>
-        </form>
-        </p>
-        <br />
-        <script type='text/javascript'>
-            $(function() {
-                $('.copy-to-clipboard').click(function() {
-                    var copyText = document.createElement('input');
-                    copyText.type = 'text';
-                    document.body.appendChild(copyText);
-                    copyText.style = 'display: inline; width: 1px;';
-                    copyText.value = $('.webhook-url').text();
-                    copyText.focus();
-                    copyText.select();
-                    document.execCommand('Copy');
-                    copyText.remove();
-                    $('.copy-to-clipboard').text('Webhook url copied to clipboard.');
-                });
-            });
-        </script>";
+            'webhookUrl'                    => $this->context->link->getModuleLink('razorpay', 'webhook', [], true),
+
+            'modWebhookDescription'         => $this->l('Enable Razorpay Webhook at https://dashboard.razorpay.com/#/app/webhooks with the URL '. $webhookUrl),
+            'modWebhookEventDescription'    => $this->l('Enable Razorpay Webhook Events.'),
+            'modWebhookSecretDescription'   => $this->l('Webhook secret is used for webhook signature verification. This has to match the one added at https://dashboard.razorpay.com/#/app/webhooks'),
+            'modWebhookWaitTimeDescription' => $this->l('Required (Set the time in seconds, that webhook wait before creating a order from the backend for missed razorpay captured payments. )'),
+        ]);
+
+        $this->_html .= $this->fetch('module:razorpay/views/templates/admin/admin.tpl');
     }
 
     public function install()
@@ -349,6 +289,7 @@ class Razorpay extends PaymentModule
         Configuration::deleteByName('RAZORPAY_KEY_SECRET');
         Configuration::deleteByName('RAZORPAY_PAYMENT_ACTION');
         Configuration::deleteByName('ENABLE_RAZORPAY_WEBHOOK');
+        Configuration::deleteByName('RAZORPAY_WEBHOOK_EVENTS');
         Configuration::deleteByName('RAZORPAY_WEBHOOK_SECRET');
         Configuration::deleteByName('RAZORPAY_WEBHOOK_WAIT_TIME');
 
@@ -422,11 +363,11 @@ class Razorpay extends PaymentModule
 
             if (empty($keyId))
             {
-                $this->_postErrors[] = $this->l('Your Key Id is required.');
+                $this->_postErrors[] = $this->displayError($this->trans('Your Key Id is required.', array(), 'Admin.Notifications.Error'));
             }
             if (empty($keySecret))
             {
-                $this->_postErrors[] = $this->l('Your Key Secret is required.');
+                $this->_postErrors[] = $this->displayError($this->trans('Your Key Secret is required.', array(), 'Admin.Notifications.Error'));
             }
         }
     }
@@ -439,6 +380,7 @@ class Razorpay extends PaymentModule
             Configuration::updateValue('RAZORPAY_KEY_SECRET', Tools::getValue('KEY_SECRET'));
             Configuration::updateValue('RAZORPAY_PAYMENT_ACTION', Tools::getValue('PAYMENT_ACTION'));
             Configuration::updateValue('ENABLE_RAZORPAY_WEBHOOK', Tools::getValue('ENABLE_WEBHOOK'));
+            Configuration::updateValue('RAZORPAY_WEBHOOK_EVENTS', Tools::getValue('EVENTS'));
             Configuration::updateValue('RAZORPAY_WEBHOOK_SECRET', Tools::getValue('WEBHOOK_SECRET'));
             //default is 300 seconds
             $webhookWaitTime = Tools::getValue('WEBHOOK_WAIT_TIME') ? Tools::getValue('WEBHOOK_WAIT_TIME') : 300;
@@ -447,12 +389,124 @@ class Razorpay extends PaymentModule
             $this->KEY_ID= Tools::getValue('KEY_ID');
             $this->KEY_SECRET= Tools::getValue('KEY_SECRET');
             $this->PAYMENT_ACTION= Tools::getValue('PAYMENT_ACTION');
-            $this->ENABLE_WEBHOOK= Tools::getValue('ENABLE_WEBHOOK');
+            $this->WEBHOOK_EVENTS= Tools::getValue('EVENTS');
             $this->WEBHOOK_SECRET= Tools::getValue('WEBHOOK_SECRET');
             $this->WEBHOOK_WAIT_TIME= $webhookWaitTime;
+
+            $this->autoEnableWebhook();
         }
 
         $this->_html .= $this->displayConfirmation($this->trans('Settings updated', array(), 'Admin.Notifications.Success'));
+    }
+
+    public function autoEnableWebhook()
+    {
+        $webhookExist = false;
+        $webhookUrl   = $this->context->link->getModuleLink('razorpay', 'webhook', [], true);
+
+        $eventsSubscribe = $this->WEBHOOK_EVENTS;
+
+        $prepareEventsData = [];
+
+        if(empty($eventsSubscribe) == false)
+        {
+            foreach ($eventsSubscribe as $value) 
+            {
+                $prepareEventsData[$value] = true;
+            }
+        }
+
+        $domain = parse_url($webhookUrl, PHP_URL_HOST);
+
+        $domain_ip = gethostbyname($domain);
+
+        if (!filter_var($domain_ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) && Tools::getValue('ENABLE_WEBHOOK') == 'on')
+        {
+            Configuration::updateValue('ENABLE_RAZORPAY_WEBHOOK', $this->ENABLE_WEBHOOK);
+
+            Logger::addLog('Could not enable webhook for localhost', 4);
+
+            $this->_html .= $this->displayError($this->trans('Webhook cant be set for localhost server.', array(), 'Admin.Notifications.Warning'));
+
+            return;
+        }
+
+        $this->ENABLE_WEBHOOK= Tools::getValue('ENABLE_WEBHOOK');
+
+        if($this->ENABLE_WEBHOOK == null)
+        {
+            $data = [
+                'url'    => $webhookUrl,
+                'active' => false,
+            ];
+        }
+        else
+        {
+            //validating event is not empty
+            if(empty($eventsSubscribe) === true)
+            {
+                $this->_html .= $this->displayError($this->trans('At least one webhook event needs to be subscribed to enable webhook.', array(), 'Admin.Notifications.Warning'));
+
+                return;
+            }
+
+            //validating webhook secret is not empty
+            if(empty($this->WEBHOOK_SECRET) === true)
+            {
+                $this->_html .= $this->displayError($this->trans('Webhook secret field can`t be empty.', array(), 'Admin.Notifications.Warning'));   
+                             
+                return;
+            }
+
+            $data = [
+                'url'    => $webhookUrl,
+                'active' => $this->ENABLE_WEBHOOK == 'on' ? true: false,
+                'events' => $prepareEventsData,
+                'secret' => $this->WEBHOOK_SECRET,
+            ];
+
+        }
+
+        $webhook = $this->webhookAPI("GET", "webhooks");
+
+        if(isset($webhook['count']) & $webhook['count'] > 0)
+        {
+            foreach ($webhook['items'] as $key => $value) 
+            {
+                if($value['url'] === $webhookUrl)
+                {
+                    $webhookExist  = true;
+                    $webhookId     = $value['id'];
+                }
+            }
+        }
+        
+        if($webhookExist)
+        {
+            $this->webhookAPI('PUT', "webhooks/".$webhookId, $data);
+        }
+        else
+        {
+            $this->webhookAPI('POST', "webhooks/", $data);
+        }
+        
+    }
+
+    protected function webhookAPI($method, $url, $data = array())
+    {
+        $webhook = [];
+        try
+        {
+            $api = $this->getRazorpayApiInstance();
+
+            $webhook = $api->request->request($method, $url, $data);
+        }
+        catch(Exception $e)
+        {
+            Logger::addLog($e->getMessage(), 4);
+        }
+
+        return $webhook;
     }
 
     private function _displayrazorpay()
@@ -461,13 +515,6 @@ class Razorpay extends PaymentModule
         $modStatus  = $this->l('Razorpay online payment service is the right solution for you if you are accepting payments in INR');
         $modconfirm = $this->l('');
         $this->_html .= "<img src='https://cdn.razorpay.com/logo.svg' style='float:left; margin-right:15px;' />
-            <b>{$modDesc}</b>
-            <br />
-            <br />
-            {$modStatus}
-            <br />
-            {$modconfirm}
-            <br />
             <br />
             <br />";
     }
