@@ -144,9 +144,9 @@ class RZP_Webhook
 
             if ($salesOrderData['order_placed'])
             {
-                 Logger::addLog("Razorpay Webhook: Quote order is inactive for cartID: $cartId and Razorpay payment_id(:$razorpayPaymentId) with PrestaShop OrderID (:" . $salesOrderData['increment_order_id'] . ") ", 4);
+                 Logger::addLog("Razorpay Webhook: Quote order is inactive for cartID: $cartId and Razorpay payment_id(:$razorpayPaymentId) with PrestaShop OrderID (:" . $salesOrderData['order_id'] . ") ", 1);
 
-                //return;
+                exit;
             }
 
             $setWebhookFirstNotifiedQuery =  "UPDATE `razorpay_sales_order` SET ";
@@ -176,7 +176,7 @@ class RZP_Webhook
             //ignore webhook call for some time as per config, from first webhook call
             if ((time() - $firstNotifiedTime) < $webhookWaitTime)
             {
-                Logger::addLog("Razorpay Webhook: Order processing is active for cartID: $cartId and Razorpay payment_id(:$razorpayPaymentId) and webhook attempt: " . ($salesOrderData['webhook_count'] + 1), 4);
+                Logger::addLog("Razorpay Webhook: Order processing is active for cartID: $cartId and Razorpay payment_id(:$razorpayPaymentId) and webhook attempt: " . ($salesOrderData['webhook_count'] + 1), 1);
 
                 header('Status: 409 Conflict, too early for processing', true, 409);
 
@@ -279,7 +279,7 @@ class RZP_Webhook
 
             } catch (\Razorpay\Api\Errors\BadRequestError $e){
                 $error = $e->getMessage();
-                Logger::addLog("Razorpay payment notes update failed for the webhook of Razorpay payment id: ".$razorpayPaymentId. "with the Error ".$error, 4);
+                Logger::addLog("Razorpay payment notes update failed for the webhook of Razorpay payment id: ".$razorpayPaymentId. "with the Error ".$error, 3);
             }
 
             //add to entry to razorpay_sales_order table
@@ -300,7 +300,7 @@ class RZP_Webhook
 
                 $result = $db->execute($request);
 
-                Logger::addLog("Record inserted in razorpay_sales_order table ", 4);
+                Logger::addLog("Record inserted in razorpay_sales_order table ", 1);
             }
 
         }
