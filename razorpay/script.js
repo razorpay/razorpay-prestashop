@@ -72,6 +72,9 @@ document.addEventListener('DOMContentLoaded', function(event) {
       handler: function(obj) {
         clearInterval(intervalId);
 
+        baseurl = window.location.origin+'/modules/razorpay/loader-2.gif';
+        div = $('<div id="blockcart-modal" class="modal fade in" tabindex="-1" role="dialog" aria-labelledby="" style="display: block;"><div class="modal-dialog" role="document" style="top: 266px;"><div class="row" style="margin-left: auto;margin-right: auto;width: 13%;display: block;"><img src="'+baseurl+'" alt="loading"></div> </div></div>');
+        $("body").prepend(div); 
         // Find the payment form with the correct action
         var form = document.querySelector(
           'form[id=payment-form][action$="'+ defaults.action_controller + '"]'
