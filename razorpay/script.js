@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function(event) {
+$(document).ready(function () {
   // This is a <div> and not the button.
   var submitButton = document.getElementById('payment-confirmation');
   var newSubmitButton = document.createElement('button');
