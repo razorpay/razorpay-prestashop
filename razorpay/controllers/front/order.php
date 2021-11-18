@@ -35,11 +35,20 @@ class RazorpayOrderModuleFrontController extends ModuleFrontController
 
             if (null !== $order && !empty($order->id))
             {
+                $invoiceAddress = new Address($this->context->cart->id_address_invoice);
+
+                $contactNumber = ($invoiceAddress->phone !== '') ? $invoiceAddress->phone : $invoiceAddress->phone_mobile;
+
                 $responseContent = [
-                    'success'       => true,
-                    'rzp_order_id'  => $order->id,
-                    'amount'        => $amount
+                    'success'           => true,
+                    'rzp_order_id'      => $order->id,
+                    'amount'            => $amount,
+                    'currency'          => $this->context->currency->iso_code,
+                    'contact_number'    => $contactNumber,
+                    'customer_name'     => trim($this->context->customer->firstname . ' ' . $this->context->customer->lastname),
+                    'customer_email'    => $this->context->customer->email
                 ];
+
 
                 $code = 200;
 

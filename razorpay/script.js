@@ -29,34 +29,19 @@ $(document).ready(function () {
 
   var intervalId = null;
 
-  var contactNumber = (function() {
-    for (var i in prestashop.customer.addresses) {
-      var address = prestashop.customer.addresses[i];
-      if (address.phone !== '') {
-        return address.phone;
-      }
-      if (address.phone_mobile !== '') {
-        return address.phone_mobile;
-      }
-    }
-    return '';
-  })();
-
-
   var renderPaymentFrame =  function(data) {
     var defaults = window.razorpay_checkout_vars;
-    var customer = prestashop.customer;
     options = {
-      name: prestashop.shop.name,
+      name: defaults.name,
       amount: data.amount,
       description: defaults.description,
       name: defaults.name,
       key: defaults.key,
-      currency: prestashop.currency.iso_code,
+      currency: data.currency,
       prefill: {
-        name: customer.firstname + ' ' + customer.lastname,
-        email: customer.email,
-        contact: contactNumber,
+        name: data.customer_name,
+        email: data.customer_email,
+        contact: data.contact_number,
       },
       order_id: data.rzp_order_id,
       notes: {
