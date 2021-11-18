@@ -1,9 +1,9 @@
 $(document).ready(function () {
   // This is a <div> and not the button.
-  var submitButton = document.getElementById('payment-confirmation');
-  var newSubmitButton = document.createElement('button');
-  var baseClass = 'btn btn-primary center-block ';
-  newSubmitButton.id = 'razorpay-pay-button';
+  var submitButton = document.getElementById("payment-confirmation");
+  var newSubmitButton = document.createElement("button");
+  var baseClass = "btn btn-primary center-block ";
+  newSubmitButton.id = "razorpay-pay-button";
 
   if (!submitButton) {
     return;
