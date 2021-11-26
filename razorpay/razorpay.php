@@ -237,7 +237,6 @@ class Razorpay extends PaymentModule
                 'razorpay_checkout_vars'    =>  [
                     'key'               => $this->KEY_ID,
                     'name'              => Configuration::get('PS_SHOP_NAME'),
-                    'cart'              => $cart_presenter->present($this->context->cart),
                     'amount'            => $amount,
                     'cart_id'           => $this->context->cart->id,
                     'rzp_order_id'      => $rzp_order_id,
