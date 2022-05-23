@@ -17,6 +17,22 @@ class RazorpayOrderModuleFrontController extends ModuleFrontController
             exit;
         }
 
+
+        //verify the webhook enabled or not
+        $webhookLastVerified = Configuration::get('RAZORPAY_WEBHOOK_LAST_VERIFY');
+
+        if (empty($webhookLastVerified) === true)
+        {
+            (new Razorpay(false))->autoEnableWebhook();
+        }
+        else
+        {
+            if ($webhookLastVerified + 86400 < time())
+            {
+                (new Razorpay(false))->autoEnableWebhook();
+            }
+        }
+
         $payment_action = Configuration::get('RAZORPAY_PAYMENT_ACTION') ? Configuration::get('RAZORPAY_PAYMENT_ACTION') : Razorpay::CAPTURE;
 
         $amount = number_format(($this->context->cart->getOrderTotal() * 100), 0, "", "");
