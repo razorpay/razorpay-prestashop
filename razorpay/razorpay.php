@@ -386,18 +386,15 @@ class Razorpay extends PaymentModule
             Configuration::updateValue('ENABLE_RAZORPAY_WEBHOOK', true);
             Configuration::updateValue('RAZORPAY_WEBHOOK_EVENTS', Tools::getValue('EVENTS'));
 
-            $webhookSecret = Configuration::get('RAZORPAY_WEBHOOK_SECRET') ? Configuration::get('RAZORPAY_WEBHOOK_SECRET') : $this->createWebhookSecret();
-
-            Configuration::updateValue('RAZORPAY_WEBHOOK_SECRET', $webhookSecret);
             //default is 300 seconds
             $webhookWaitTime = Tools::getValue('WEBHOOK_WAIT_TIME') ? Tools::getValue('WEBHOOK_WAIT_TIME') : 300;
             Configuration::updateValue('RAZORPAY_WEBHOOK_WAIT_TIME', $webhookWaitTime);
 
-            $this->KEY_ID= Tools::getValue('KEY_ID');
-            $this->KEY_SECRET= Tools::getValue('KEY_SECRET');
-            $this->PAYMENT_ACTION= Tools::getValue('PAYMENT_ACTION');
-            $this->WEBHOOK_SECRET= $webhookSecret;
-            $this->WEBHOOK_WAIT_TIME= $webhookWaitTime;
+            $this->KEY_ID               = Tools::getValue('KEY_ID');
+            $this->KEY_SECRET           = Tools::getValue('KEY_SECRET');
+            $this->PAYMENT_ACTION       = Tools::getValue('PAYMENT_ACTION');
+
+            $this->WEBHOOK_WAIT_TIME    = $webhookWaitTime;
 
             $this->autoEnableWebhook();
         }
@@ -417,6 +414,12 @@ class Razorpay extends PaymentModule
         $webhookExist = false;
         $webhookUrl   = $this->context->link->getModuleLink('razorpay', 'webhook', [], true);
 
+        $webhookSecret = Configuration::get('RAZORPAY_WEBHOOK_SECRET') ? Configuration::get('RAZORPAY_WEBHOOK_SECRET') : $this->createWebhookSecret();
+
+        $this->WEBHOOK_SECRET = $webhookSecret;
+
+        Configuration::updateValue('RAZORPAY_WEBHOOK_SECRET', $webhookSecret);
+
         $prepareEventsData = [];
 
         $domain = parse_url($webhookUrl, PHP_URL_HOST);
@@ -425,7 +428,7 @@ class Razorpay extends PaymentModule
 
         if (!filter_var($domain_ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE))
         {
-            Configuration::updateValue('ENABLE_RAZORPAY_WEBHOOK', false);
+            Configuration::updateValue('ENABLE_RAZORPAY_WEBHOOK', 'off');
 
             Logger::addLog('Could not enable webhook for localhost', 3);
 
@@ -487,7 +490,7 @@ class Razorpay extends PaymentModule
 
         Configuration::updateValue('RAZORPAY_WEBHOOK_LAST_VERIFY', time());
 
-        Configuration::updateValue('ENABLE_RAZORPAY_WEBHOOK', true);
+        Configuration::updateValue('ENABLE_RAZORPAY_WEBHOOK', 'on');
         
     }
 
