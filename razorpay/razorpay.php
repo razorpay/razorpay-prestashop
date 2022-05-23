@@ -446,7 +446,8 @@ class Razorpay extends PaymentModule
 
             $skipCount += $count;
 
-            if (isset($webhook['count']) & $webhook['count'] > 0)
+            if ((isset($webhook['count']) === true) and
+                ($webhook['count'] > 0))
             {
                 foreach ($webhook['items'] as $key => $value)
                 {

@@ -17,7 +17,6 @@ class RazorpayOrderModuleFrontController extends ModuleFrontController
             exit;
         }
 
-
         //verify the webhook enabled or not
         $webhookLastVerified = Configuration::get('RAZORPAY_WEBHOOK_LAST_VERIFY');
 
