@@ -44,41 +44,6 @@
             </td>
          </tr>
          <tr>
-            <td width='130' title='{$modWebhookDescription}'><b>{$modEnableWebhookLabel}</b></td>
-            <td>
-               <input type='checkbox' name='ENABLE_WEBHOOK' {$modEnableWebhook} id='enabled_webhook'/>
-            </td>
-         </tr>
-         <tr id='events'>
-            <td width='' title='{$modWebhookEventDescription}'><b>{$modEnableWebhookEventsLabel}</b></td>
-            <td>
-               <select name='EVENTS[]' multiple>
-                   <option value='{$modOrderPaidEvent}' {$modEventOrderPaidSelected}>{$modOrderPaidEvent}</option>
-               </select>
-            </td>
-         </tr>
-         <tr id='webhook_secret'>
-            <td width='130' title='{$modWebhookSecretDescription}'><b>{$modWebhookSecretLabel}</b></td>
-            <td>
-               <input type='text' name='WEBHOOK_SECRET' value='{$modWebhookSecret}' style='width: 300px;'/>
-            </td>
-         </tr>
-         <tr id='webhook_delay'>
-            <td width='130' title='{$modWebhookWaitTimeDescription}'><b>{$modWebhookWithTimeLabel}</b></td>
-            <td>
-               <input type='text' name='WEBHOOK_WAIT_TIME' value='{$modWebhookWaitTime}' style='width: 300px;'/>
-            </td>
-         </tr>
-         <tr id='webhook_url'>
-            <td width='130'><b>Webhook Url</b></td>
-            <td style='padding:5px 0;'>
-               <span style='width:300px;font-weight: bold;' class='webhook-url' >{$webhookUrl}</span>
-               <br>
-               <span class='copy-to-clipboard'
-                  style='background-color: #337ab7; color: white; border: none;cursor: pointer; padding: 2px 4px; text-decoration: none;'>Copy</span>
-            </td>
-         </tr>
-         <tr>
             <td colspan='2' align='center'>
                <input class='button' name='btnSubmit' value='{$modUpdateSettings}' type='submit' />
             </td>

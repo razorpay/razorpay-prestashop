@@ -29,6 +29,17 @@ class Razorpay extends PaymentModule
     const ORDER_PAID            = 'order.paid';
 
 
+    protected $webhookSupportedEvents = [
+        'payment.authorized',
+        'payment.failed',
+        'order.paid',
+    ];
+
+    protected $webhookEvents = [
+        'payment.authorized' => true,
+        'order.paid'         => true,
+    ];
+
     public function __construct()
     {
         $this->controllers            = ['validation'];
@@ -50,7 +61,8 @@ class Razorpay extends PaymentModule
             'ENABLE_RAZORPAY_WEBHOOK',
             'RAZORPAY_WEBHOOK_EVENTS',
             'RAZORPAY_WEBHOOK_SECRET',
-            'RAZORPAY_WEBHOOK_WAIT_TIME'
+            'RAZORPAY_WEBHOOK_WAIT_TIME',
+            'RAZORPAY_WEBHOOK_LAST_VERIFY'
         ]);
 
         if (array_key_exists('RAZORPAY_KEY_ID', $config))
@@ -86,6 +98,11 @@ class Razorpay extends PaymentModule
         if (array_key_exists('RAZORPAY_WEBHOOK_WAIT_TIME', $config))
         {
             $this->WEBHOOK_WAIT_TIME = $config['RAZORPAY_WEBHOOK_WAIT_TIME'];
+        }
+
+        if (array_key_exists('RAZORPAY_WEBHOOK_LAST_VERIFY', $config))
+        {
+            $this->WEBHOOK_LAST_VERIFY = $config['RAZORPAY_WEBHOOK_LAST_VERIFY'];
         }
 
         parent::__construct();
@@ -142,12 +159,7 @@ class Razorpay extends PaymentModule
             'modClientValueKeyId'           => $this->KEY_ID,
             'modClientValueKeySecret'       => $this->KEY_SECRET,
             'modUpdateSettings'             => $this->l('Update settings'),
-            'modEnableWebhook'              => ($this->ENABLE_WEBHOOK  === 'on') ? 'checked' : '',
             'modWebhookSecret'              => $this->WEBHOOK_SECRET,
-            'modEnableWebhookLabel'         => $this->l('Enable Webhook'),
-            'modEnableWebhookEventsLabel'   => $this->l('Enable Webhook Events'),
-            'modWebhookSecretLabel'         => $this->l('Webhook Secret'),
-            'modWebhookWithTimeLabel'       => $this->l('Webhook Wait Time'),
             'modWebhookWaitTime'            => $this->WEBHOOK_WAIT_TIME ? $this->WEBHOOK_WAIT_TIME : 300,
             'modPayActionCaptureLabel'      => $this->l('Authorize and Capture'),
             'modPayActionAuthorizeLabel'    => $this->l('Authorize'),
@@ -160,14 +172,7 @@ class Razorpay extends PaymentModule
 
             'modOrderPaidEvent'             => self::ORDER_PAID,
 
-            'modEventOrderPaidSelected'     => ($this->RAZORPAY_WEBHOOK_EVENTS == self::ORDER_PAID) ? "selected = 'selected'" : "",
-
             'webhookUrl'                    => $this->context->link->getModuleLink('razorpay', 'webhook', [], true),
-
-            'modWebhookDescription'         => $this->l('Enable Razorpay Webhook at https://dashboard.razorpay.com/#/app/webhooks with the URL '. $webhookUrl),
-            'modWebhookEventDescription'    => $this->l('Enable Razorpay Webhook Events.'),
-            'modWebhookSecretDescription'   => $this->l('Webhook secret is used for webhook signature verification. This has to match the one added at https://dashboard.razorpay.com/#/app/webhooks'),
-            'modWebhookWaitTimeDescription' => $this->l('Required (Set the time in seconds, that webhook wait before creating a order from the backend for missed razorpay captured payments. )'),
         ]);
 
         $this->_html .= $this->fetch('module:razorpay/views/templates/admin/admin.tpl');
@@ -378,19 +383,18 @@ class Razorpay extends PaymentModule
             Configuration::updateValue('RAZORPAY_KEY_ID', Tools::getValue('KEY_ID'));
             Configuration::updateValue('RAZORPAY_KEY_SECRET', Tools::getValue('KEY_SECRET'));
             Configuration::updateValue('RAZORPAY_PAYMENT_ACTION', Tools::getValue('PAYMENT_ACTION'));
-            Configuration::updateValue('ENABLE_RAZORPAY_WEBHOOK', Tools::getValue('ENABLE_WEBHOOK'));
+            Configuration::updateValue('ENABLE_RAZORPAY_WEBHOOK', true);
             Configuration::updateValue('RAZORPAY_WEBHOOK_EVENTS', Tools::getValue('EVENTS'));
-            Configuration::updateValue('RAZORPAY_WEBHOOK_SECRET', Tools::getValue('WEBHOOK_SECRET'));
+
             //default is 300 seconds
             $webhookWaitTime = Tools::getValue('WEBHOOK_WAIT_TIME') ? Tools::getValue('WEBHOOK_WAIT_TIME') : 300;
             Configuration::updateValue('RAZORPAY_WEBHOOK_WAIT_TIME', $webhookWaitTime);
 
-            $this->KEY_ID= Tools::getValue('KEY_ID');
-            $this->KEY_SECRET= Tools::getValue('KEY_SECRET');
-            $this->PAYMENT_ACTION= Tools::getValue('PAYMENT_ACTION');
-            $this->WEBHOOK_EVENTS= Tools::getValue('EVENTS');
-            $this->WEBHOOK_SECRET= Tools::getValue('WEBHOOK_SECRET');
-            $this->WEBHOOK_WAIT_TIME= $webhookWaitTime;
+            $this->KEY_ID               = Tools::getValue('KEY_ID');
+            $this->KEY_SECRET           = Tools::getValue('KEY_SECRET');
+            $this->PAYMENT_ACTION       = Tools::getValue('PAYMENT_ACTION');
+
+            $this->WEBHOOK_WAIT_TIME    = $webhookWaitTime;
 
             $this->autoEnableWebhook();
         }
@@ -398,87 +402,83 @@ class Razorpay extends PaymentModule
         $this->_html .= $this->displayConfirmation($this->trans('Settings updated', array(), 'Admin.Notifications.Success'));
     }
 
+    protected function createWebhookSecret()
+    {
+        $secretGenString = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-=~!@#$%^&*()_+,./<>?;:[]{}|abcdefghijklmnopqrstuvwxyz';
+
+        return substr(str_shuffle($secretGenString), 0, 20);
+    }
+
     public function autoEnableWebhook()
     {
         $webhookExist = false;
         $webhookUrl   = $this->context->link->getModuleLink('razorpay', 'webhook', [], true);
 
-        $eventsSubscribe = $this->WEBHOOK_EVENTS;
+        $webhookSecret = Configuration::get('RAZORPAY_WEBHOOK_SECRET') ? Configuration::get('RAZORPAY_WEBHOOK_SECRET') : $this->createWebhookSecret();
+
+        $this->WEBHOOK_SECRET = $webhookSecret;
+
+        Configuration::updateValue('RAZORPAY_WEBHOOK_SECRET', $webhookSecret);
 
         $prepareEventsData = [];
-
-        if(empty($eventsSubscribe) == false)
-        {
-            foreach ($eventsSubscribe as $value) 
-            {
-                $prepareEventsData[$value] = true;
-            }
-        }
 
         $domain = parse_url($webhookUrl, PHP_URL_HOST);
 
         $domain_ip = gethostbyname($domain);
 
-        if (!filter_var($domain_ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) && Tools::getValue('ENABLE_WEBHOOK') == 'on')
+        if (!filter_var($domain_ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE))
         {
-            Configuration::updateValue('ENABLE_RAZORPAY_WEBHOOK', $this->ENABLE_WEBHOOK);
+            Configuration::updateValue('ENABLE_RAZORPAY_WEBHOOK', 'off');
 
-            Logger::addLog('Could not enable webhook for localhost', 4);
-
-            $this->_html .= $this->displayError($this->trans('Webhook cant be set for localhost server.', array(), 'Admin.Notifications.Warning'));
+            Logger::addLog('Could not enable webhook for localhost', 3);
 
             return;
         }
 
-        $this->ENABLE_WEBHOOK= Tools::getValue('ENABLE_WEBHOOK');
+        $this->ENABLE_WEBHOOK = true;
 
-        if($this->ENABLE_WEBHOOK == null)
+        $skipCount  = 0;
+        $count      = 10;
+
+        do
         {
-            $data = [
-                'url'    => $webhookUrl,
-                'active' => false,
-            ];
-        }
-        else
-        {
-            //validating event is not empty
-            if(empty($eventsSubscribe) === true)
+            $webhook = $this->webhookAPI('GET', 'webhooks?count='. $count . '&skip=' . $skipCount);
+
+            $skipCount += $count;
+
+            if ((isset($webhook['count']) === true) and
+                ($webhook['count'] > 0))
             {
-                $this->_html .= $this->displayError($this->trans('At least one webhook event needs to be subscribed to enable webhook.', array(), 'Admin.Notifications.Warning'));
-
-                return;
-            }
-
-            //validating webhook secret is not empty
-            if(empty($this->WEBHOOK_SECRET) === true)
-            {
-                $this->_html .= $this->displayError($this->trans('Webhook secret field can`t be empty.', array(), 'Admin.Notifications.Warning'));   
-                             
-                return;
-            }
-
-            $data = [
-                'url'    => $webhookUrl,
-                'active' => $this->ENABLE_WEBHOOK == 'on' ? true: false,
-                'events' => $prepareEventsData,
-                'secret' => $this->WEBHOOK_SECRET,
-            ];
-
-        }
-
-        $webhook = $this->webhookAPI("GET", "webhooks");
-
-        if(isset($webhook['count']) & $webhook['count'] > 0)
-        {
-            foreach ($webhook['items'] as $key => $value) 
-            {
-                if($value['url'] === $webhookUrl)
+                foreach ($webhook['items'] as $key => $value)
                 {
-                    $webhookExist  = true;
-                    $webhookId     = $value['id'];
+                    if ($value['url'] === $webhookUrl)
+                    {
+                        $webhookExist  = true;
+                        $webhookId     = $value['id'];
+
+                        foreach($value['events'] as $event => $enabled)
+                        {
+                            if (($enabled === true) and
+                                (in_array($event, $this->webhookSupportedEvents) === true))
+                            {
+                                $this->webhookEvents[$event] = true;
+                            }
+                        }
+
+                        break;
+                    }
                 }
             }
+
         }
+        while ( $webhook['count'] === $count);
+
+        $data = [
+            'url'    => $webhookUrl,
+            'active' => true,
+            'events' => $this->webhookEvents,
+            'secret' => $this->WEBHOOK_SECRET,
+        ];
         
         if($webhookExist)
         {
@@ -488,12 +488,17 @@ class Razorpay extends PaymentModule
         {
             $this->webhookAPI('POST', "webhooks/", $data);
         }
+
+        Configuration::updateValue('RAZORPAY_WEBHOOK_LAST_VERIFY', time());
+
+        Configuration::updateValue('ENABLE_RAZORPAY_WEBHOOK', 'on');
         
     }
 
     protected function webhookAPI($method, $url, $data = array())
     {
         $webhook = [];
+
         try
         {
             $api = $this->getRazorpayApiInstance();
