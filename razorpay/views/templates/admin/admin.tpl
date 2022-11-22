@@ -13,6 +13,12 @@
    #form input[type=text]{
      height: 30px !important;
    }
+   a:link {
+      color: blue;
+   }
+   a:visited {
+      color: blue;
+   }
 </style>
 <p><form action='{$_SERVER['REQUEST_URI']}' method='post'>
    <fieldset style='background-color:white;'>
@@ -21,6 +27,10 @@
        </legend>
       <table border='0' cellpadding='0' cellspacing='15' style='margin-left: 10%; border-spacing: 5px;' id='form'>
 
+         <tr>
+            First <a href="https://easy.razorpay.com/onboarding?recommended_product=payment_gateway&source=prestashop" target="_blank">signup</a> for a 
+            Razorpay account or <a href="https://dashboard.razorpay.com/signin?screen=sign_in&source=prestashop" target="_blank">login</a> if you have an existing account.
+         </tr>
          <tr>
             <td width='130'><b>{$modClientLabelKeyId}</b></td>
             </br>
