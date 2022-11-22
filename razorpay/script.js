@@ -66,7 +66,8 @@ document.addEventListener('DOMContentLoaded', function(event) {
       _: {
         integration: 'prestashop',
         integration_version: defaults.module_version,
-        integration_parent_version: defaults.ps_version
+        integration_parent_version: defaults.ps_version,
+        integration_type: 'plugin'
       },
       callback_url: defaults.action_controller,
       handler: function(obj) {
