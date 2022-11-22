@@ -13,10 +13,10 @@
    #form input[type=text]{
      height: 30px !important;
    }
-   a:link {
+   a:link{
       color: blue;
    }
-   a:visited {
+   a:visited{
       color: blue;
    }
 </style>
