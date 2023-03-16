@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', function(event) {
 
         // Find the payment form with the correct action
         var form = document.querySelector(
-          'form[id=payment-form][action$="'+ defaults.action_controller + '"]'
+          'form[action$="'+ defaults.action_controller + '"]'
         );
 
         //set razorpay payment id
