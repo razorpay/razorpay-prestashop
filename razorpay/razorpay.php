@@ -182,7 +182,7 @@ class Razorpay extends PaymentModule
     {
         $db = \Db::getInstance();
 
-        $result = $db->executeS("
+        $result = $db->execute("
             CREATE TABLE  IF NOT EXISTS `razorpay_sales_order` (
           `entity_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Entity_id',
           `cart_id` int(11) DEFAULT NULL COMMENT 'cart_id',
@@ -299,7 +299,7 @@ class Razorpay extends PaymentModule
 
         $db = \Db::getInstance();
 
-        $result = $db->executeS("DROP TABLE IF EXISTS `razorpay_sales_order`");
+        $result = $db->execute("DROP TABLE IF EXISTS `razorpay_sales_order`");
 
         return parent::uninstall();
     }
