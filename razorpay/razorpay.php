@@ -28,6 +28,11 @@ class Razorpay extends PaymentModule
     const PAYMENT_FAILED        = 'payment.failed';
     const ORDER_PAID            = 'order.paid';
 
+    const CURRENCY_NOT_ALLOWED  = [
+        'KWD',
+        'OMR',
+        'BHD',
+    ];
 
     protected $webhookSupportedEvents = [
         'payment.authorized',
