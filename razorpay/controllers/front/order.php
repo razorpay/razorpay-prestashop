@@ -40,8 +40,16 @@ class RazorpayOrderModuleFrontController extends ModuleFrontController
 
         $rzp_order_id = "";
 
-        try{
-            $order  = (new Razorpay(false))->getRazorpayApiInstance()->order->create(array('amount' => $amount, 'currency' => $this->context->currency->iso_code, 'payment_capture' => ($payment_action === Razorpay::CAPTURE) ? 1 : 0));
+        try
+        {
+            if (in_array($this->context->currency->iso_code,  Razorpay::CURRENCY_NOT_ALLOWED) === false)
+            {
+                $order  = (new Razorpay(false))->getRazorpayApiInstance()->order->create(array('amount' => $amount, 'currency' => $this->context->currency->iso_code, 'payment_capture' => ($payment_action === Razorpay::CAPTURE) ? 1 : 0));
+            }
+            else
+            {
+                Logger::addLog("Order creation failed, because currency (". $this->context->currency->iso_code . ") not supported" . $error, 4);
+            }
 
             $responseContent = [
                 'message'    => 'Unable to create your order. Please contact support.',
