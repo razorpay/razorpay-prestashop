@@ -72,6 +72,8 @@ document.addEventListener('DOMContentLoaded', function(event) {
       callback_url: defaults.action_controller,
       handler: function(obj) {
         clearInterval(intervalId);
+        loadingimage(defaults);
+       
 
         // Find the payment form with the correct action
         var form = document.querySelector(
@@ -114,6 +116,13 @@ document.addEventListener('DOMContentLoaded', function(event) {
       }
     });
   });
+
+
+  var loadingimage =  function(defaults) {
+    baseurl = defaults.loaderimg,
+    div = $('<div id="blockcart-modal" class="modal fade in" tabindex="-1" role="dialog" aria-labelledby="" style="display: block;"><div class="modal-dialog" role="document" style="top: 266px;"><div class="row" style="margin-left: auto;margin-right: auto;width: 13%;display: block;">'+baseurl+'</div> </div></div>');
+    $("body").prepend(div);
+  };
 
 
   var parent = document.querySelector('#checkout-payment-step');

@@ -242,6 +242,7 @@ class Razorpay extends PaymentModule
 
             $order_controller = $this->context->link->getModuleLink('razorpay', 'order', [], true);
             $action_controller = $this->context->link->getModuleLink('razorpay', 'validation', [], true);
+            $loaderimg  = "<img src='../modules/razorpay/loader-2.gif' alt='loading' />";
 
             Media::addJsDef([
                 'razorpay_checkout_vars'    =>  [
@@ -254,6 +255,7 @@ class Razorpay extends PaymentModule
                     'module_version'    => $this->version,
                     'order_controller'  => $order_controller,
                     'action_controller' => $action_controller,
+                    'loaderimg'         => $loaderimg,
                 ]
             ]);
         }
