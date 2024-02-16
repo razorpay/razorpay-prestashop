@@ -20,7 +20,7 @@
       color: blue;
    }
 </style>
-<p><form action='{$_SERVER['REQUEST_URI']}' method='post'>
+<p><form action='{$smarty.server.REQUEST_URI}' method='post'>
    <fieldset style='background-color:white;'>
        <legend>
            <img src='../img/admin/edit.gif' />{$modrazorpay}
