@@ -15,6 +15,12 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
 
         $paymentId = $_REQUEST['razorpay_payment_id'];
 
+        if (isset($this->context->getContext()->cart->id) === false)
+        {
+            $this->context->getContext()->cart = new Cart($_REQUEST['cart_id']);
+            $this->context->getContext()->customer = new Customer($this->context->getContext()->cart->id_customer);
+        }
+
         $cart = $this->context->cart;
 
         if (($cart->id_customer === 0) or
@@ -69,6 +75,11 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
                     'razorpay_payment_id' => $_REQUEST['razorpay_payment_id'],
                     'razorpay_signature' => $_POST['razorpay_signature']
                 );
+
+                if (isset($_SESSION['rzp_order_id']) === false)
+                {
+                    $attributes['razorpay_order_id'] = $payment['order_id'];
+                }
 
                 $api->utility->verifyPaymentSignature($attributes);
             }
