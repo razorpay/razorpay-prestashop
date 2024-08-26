@@ -15,7 +15,8 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
 
         $paymentId = $_REQUEST['razorpay_payment_id'];
 
-        if (isset($this->context->getContext()->cart->id) === false)
+        if (isset($this->context->getContext()->cart->id) === false and
+            is_numeric($_REQUEST['cart_id']) === true)
         {
             $this->context->getContext()->cart = new Cart($_REQUEST['cart_id']);
             $this->context->getContext()->customer = new Customer($this->context->getContext()->cart->id_customer);
