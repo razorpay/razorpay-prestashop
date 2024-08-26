@@ -241,7 +241,7 @@ class Razorpay extends PaymentModule
             $rzp_order_id = "";
 
             $order_controller = $this->context->link->getModuleLink('razorpay', 'order', [], true);
-            $action_controller = $this->context->link->getModuleLink('razorpay', 'validation', [], true);
+            $action_controller = $this->context->link->getModuleLink('razorpay', 'validation', ['cart_id' => $this->context->cart->id], true);
 
             Media::addJsDef([
                 'razorpay_checkout_vars'    =>  [

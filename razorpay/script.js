@@ -73,13 +73,15 @@ document.addEventListener('DOMContentLoaded', function(event) {
       handler: function(obj) {
         clearInterval(intervalId);
 
+        let url = new URL(defaults.action_controller);
+
         // Find the payment form with the correct action
         var form = document.querySelector(
-          'form[action$="'+ defaults.action_controller + '"]'
+            'form[action$="'+ defaults.action_controller + '"]'+
+            ',form[action$="'+ url.origin + url.pathname + '"]'
         );
 
         //set razorpay payment id
-        let url = new URL(defaults.action_controller);
         url.searchParams.set("razorpay_payment_id", obj.razorpay_payment_id);
 
         form.setAttribute(
