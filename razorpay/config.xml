@@ -2,7 +2,7 @@
 <module>
     <name>razorpay</name>
     <displayName><![CDATA[Razorpay]]></displayName>
-    <version><![CDATA[2.5.4]]></version>
+    <version><![CDATA[2.5.5]]></version>
     <description><![CDATA[Accept payments with Razorpay]]></description>
     <author><![CDATA[Team Razorpay]]></author>
     <tab><![CDATA[payments_gateways]]></tab>
