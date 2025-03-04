@@ -1,9 +1,9 @@
-document.addEventListener('DOMContentLoaded', function(event) {
+$(document).ready(function () {
   // This is a <div> and not the button.
-  var submitButton = document.getElementById('payment-confirmation');
-  var newSubmitButton = document.createElement('button');
-  var baseClass = 'btn btn-primary center-block ';
-  newSubmitButton.id = 'razorpay-pay-button';
+  var submitButton = document.getElementById("payment-confirmation");
+  var newSubmitButton = document.createElement("button");
+  var baseClass = "btn btn-primary center-block ";
+  newSubmitButton.id = "razorpay-pay-button";
 
   if (!submitButton) {
     return;
@@ -29,34 +29,19 @@ document.addEventListener('DOMContentLoaded', function(event) {
 
   var intervalId = null;
 
-  var contactNumber = (function() {
-    for (var i in prestashop.customer.addresses) {
-      var address = prestashop.customer.addresses[i];
-      if (address.phone !== '') {
-        return address.phone;
-      }
-      if (address.phone_mobile !== '') {
-        return address.phone_mobile;
-      }
-    }
-    return '';
-  })();
-
-
   var renderPaymentFrame =  function(data) {
     var defaults = window.razorpay_checkout_vars;
-    var customer = prestashop.customer;
     options = {
-      name: prestashop.shop.name,
+      name: defaults.name,
       amount: data.amount,
       description: defaults.description,
       name: defaults.name,
       key: defaults.key,
-      currency: prestashop.currency.iso_code,
+      currency: data.currency,
       prefill: {
-        name: customer.firstname + ' ' + customer.lastname,
-        email: customer.email,
-        contact: contactNumber,
+        name: data.customer_name,
+        email: data.customer_email,
+        contact: data.contact_number,
       },
       order_id: data.rzp_order_id,
       notes: {
