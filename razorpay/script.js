@@ -119,35 +119,34 @@ document.addEventListener('DOMContentLoaded', function(event) {
 
 
   var parent = document.querySelector('#checkout-payment-step');
+  
+  function updateRazorpayButtonState() {
+    var selected = parent.querySelector('input[data-module-name="razorpay"]')?.checked;
 
-  parent.addEventListener(
-    'change',
-    function(e) {
-      var target = e.target;
-      var type = target.type;
+    if (selected) {
+      newSubmitButton.className = baseClass + 'shown';
+    } else {
+      newSubmitButton.className = baseClass + 'not-shown';
+    }
 
-      // We switch the buttons whenever a radio button (payment method)
-      // or a checkbox (conditions) is changed
-      if (
-        (target.getAttribute('data-module-name') && type === 'radio') ||
-        type === 'checkbox'
-      ) {
-        var selected = this.querySelector('input[data-module-name="razorpay"]')
-          .checked;
+    newSubmitButton.disabled = !!document.querySelector(
+      'input[name^=conditions_to_approve]:not(:checked)'
+    );
+  }
 
-        if (selected) {
-          newSubmitButton.className = baseClass + 'shown';
-        } else {
-          newSubmitButton.className = baseClass + 'not-shown';
-        }
+  // Run once on page load
+  updateRazorpayButtonState();
 
-        // This returns the first condition that is not checked
-        // and works as a truthy value
-        newSubmitButton.disabled = !!document.querySelector(
-          'input[name^=conditions_to_approve]:not(:checked)'
-        );
-      }
-    },
-    true
-  );
+  // Listen to user changes
+  parent.addEventListener('change', function (e) {
+    var target = e.target;
+    var type = target.type;
+
+    if (
+      (target.getAttribute('data-module-name') && type === 'radio') ||
+      type === 'checkbox'
+    ) {
+      updateRazorpayButtonState();
+    }
+  }, true);
 });
