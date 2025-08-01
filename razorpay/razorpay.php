@@ -223,6 +223,8 @@ class Razorpay extends PaymentModule
     {
         if (Tools::getValue('controller') == "order")
         {
+            $this->context->controller->addJquery(); 
+            
             $this->context->controller->registerJavascript(
                'remote-razorpay-checkout',
                self::RAZORPAY_CHECKOUT_URL,
