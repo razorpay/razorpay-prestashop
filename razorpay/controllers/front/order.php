@@ -44,7 +44,14 @@ class RazorpayOrderModuleFrontController extends ModuleFrontController
         {
             if (in_array($this->context->currency->iso_code,  Razorpay::CURRENCY_NOT_ALLOWED) === false)
             {
-                $order  = (new Razorpay(false))->getRazorpayApiInstance()->order->create(array('amount' => $amount, 'currency' => $this->context->currency->iso_code, 'payment_capture' => ($payment_action === Razorpay::CAPTURE) ? 1 : 0));
+                $orderData = array(
+                    'amount'           => $amount,
+                    'currency'         => $this->context->currency->iso_code,
+                    'payment_capture'  => ($payment_action === Razorpay::CAPTURE) ? 1 : 0,
+                    'receipt'          => (string) $this->context->cart->id,
+                );
+
+                $order  = (new Razorpay(false))->getRazorpayApiInstance()->order->create($orderData);
             }
             else
             {
@@ -66,29 +73,31 @@ class RazorpayOrderModuleFrontController extends ModuleFrontController
 
                 $code = 200;
 
-                session_start();
-                $_SESSION['rzp_order_id'] = $order->id;
+                $this->context->cookie->rzp_order_id = $order->id;
 
                 //save the entry to razorpay_sales_order table
 
                 $db = \Db::getInstance();
 
-                $request = "SELECT `entity_id` FROM `razorpay_sales_order` WHERE `cart_id` = ".$this->context->cart->id;
+                $cartId = (int)$this->context->cart->id;
+                $rzpOrderId = pSQL($order->id);
+
+                $request = "SELECT `entity_id` FROM `razorpay_sales_order` WHERE `cart_id` = " . $cartId;
 
                 $order_sales_id = $db->getValue($request);
 
                 if(empty($order_sales_id) === true)
                 {
-                    $request = "INSERT INTO `razorpay_sales_order` (`cart_id`, `rzp_order_id`) VALUES (".$this->context->cart->id . ",'" . $order->id . "')";
+                    $sql = "INSERT INTO `razorpay_sales_order` (`cart_id`, `rzp_order_id`, `amount_paid`) VALUES ($cartId, '$rzpOrderId', 0.00)";
+                    $db->execute($sql);
 
-                    $result = $db->execute($request);
-                    Logger::addLog("Record inserted in razorpay_sales_order table cart_id : " . $this->context->cart->id, 4);
+                    Logger::addLog("Record inserted in razorpay_sales_order table cart_id : " . $cartId, 4);
                 }
                 else
                 {
-                    $request = "UPDATE `razorpay_sales_order` SET `cart_id` = ".$this->context->cart->id .", `rzp_order_id` = '" . $order->id . "' WHERE `entity_id` = $order_sales_id";
+                    $request = "UPDATE `razorpay_sales_order` SET `cart_id` = $cartId, `rzp_order_id` = '$rzpOrderId' WHERE `entity_id` = $order_sales_id";
 
-                    $result = $db->execute($request);
+                    $db->execute($request);
                     Logger::addLog("Record updated in razorpay_sales_order table for $order_sales_id", 4);
                 }
             }
