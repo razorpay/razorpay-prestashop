@@ -158,7 +158,7 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
         $cookieOrderId = $this->context->cookie->rzp_order_id;
 
         if (!empty($cookieOrderId)) {
-            $query = "SELECT 1 FROM `razorpay_sales_order` WHERE `cart_id` = " . (int)$cartId . " AND `rzp_order_id` = '" . $this->db->escape($cookieOrderId) . "' LIMIT 1";
+            $query = "SELECT 1 FROM `razorpay_sales_order` WHERE `cart_id` = " . (int)$cartId . " AND `rzp_order_id` = '" . pSQL($cookieOrderId) . "';";
 
             if ($this->db->getValue($query)) {
                 return $cookieOrderId;
@@ -176,7 +176,7 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
      */
     private function preventPaymentReuse($paymentId, $cartId)
     {
-        $query = "SELECT `cart_id` FROM `razorpay_sales_order` WHERE `rzp_payment_id` = '".$this->db->escape($paymentId)."' LIMIT 1";
+        $query = "SELECT `cart_id` FROM `razorpay_sales_order` WHERE `rzp_payment_id` = '".pSQL($paymentId)."';";
         $row = $this->db->getRow($query);
 
         if (!empty($row) && (int)$row['cart_id'] !== $cartId)
@@ -216,7 +216,7 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
      */
     private function verifyAmountAndCurrency($payment, $cart)
     {
-        $expectedAmount = (int)($cart->getOrderTotal(true, Cart::BOTH) * 100);
+        $expectedAmount = (int)number_format(($this->context->cart->getOrderTotal() * 100), 0, "", "");;
         $paidAmount = (int)$payment->amount;
 
         $expectedCurrency = strtoupper($this->context->currency->iso_code);
