@@ -5,6 +5,12 @@ Razorpay Prestashop Plugin Changelog
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.5.6] - 2025-09-23
+
+### Added
+- Receipt in razorpay order
+- Fixed callback validation
+
 ## [2.5.5] - 2024-09-05
 
 ### Added
