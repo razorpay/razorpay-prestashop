@@ -73,7 +73,8 @@ class RazorpayOrderModuleFrontController extends ModuleFrontController
 
                 $code = 200;
 
-                $this->context->cookie->rzp_order_id = $order->id;
+                session_start();
+                $_SESSION['rzp_order_id'] = $order->id;
 
                 //save the entry to razorpay_sales_order table
 
