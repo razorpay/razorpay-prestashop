@@ -51,7 +51,7 @@ class Razorpay extends PaymentModule
         $this->name                   = 'razorpay';
         $this->displayName            = 'Razorpay';
         $this->tab                    = 'payments_gateways';
-        $this->version                = '2.5.5';
+        $this->version                = '2.5.6';
         $this->need_instance          = 1;
         $this->ps_versions_compliancy = ['min' => '1.7.0.0', 'max' => _PS_VERSION_];
         $this->display                = true;
