@@ -2,7 +2,7 @@
 
 This extension utilizes Razorpay API and provides seamless integration with PrestaShop, allowing payments for Indian merchants via Credit Cards, Debit Cards, Net Banking (supports 3D Secure), Wallets, and UPI without redirecting away from the merchant site.
 
-Supported Prestashop version: up until 8.0.4
+Supported Prestashop version: up until 8.2.3
 
 ## Demo
 
