@@ -3,7 +3,6 @@
 require_once __DIR__.'/razorpay-sdk/Razorpay.php';
 
 use PrestaShop\PrestaShop\Core\Payment\PaymentOption;
-use PrestaShop\PrestaShop\Adapter\Cart\CartPresenter;
 use Razorpay\Api\Api;
 
 class Razorpay extends PaymentModule
@@ -51,7 +50,7 @@ class Razorpay extends PaymentModule
         $this->name                   = 'razorpay';
         $this->displayName            = 'Razorpay';
         $this->tab                    = 'payments_gateways';
-        $this->version                = '2.5.6';
+        $this->version                = '2.5.7';
         $this->need_instance          = 1;
         $this->ps_versions_compliancy = ['min' => '1.7.0.0', 'max' => _PS_VERSION_];
         $this->display                = true;
@@ -234,8 +233,6 @@ class Razorpay extends PaymentModule
                 'modules/' . $this->name . '/script.js',
                 ['position' => 'bottom', 'priority' => 30]
             );
-
-            $cart_presenter = new CartPresenter();
 
             $amount = number_format(($this->context->cart->getOrderTotal() * 100), 0, "", "");
             $rzp_order_id = "";
