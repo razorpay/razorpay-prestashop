@@ -10,7 +10,7 @@ class RazorpayOrderModuleFrontController extends ModuleFrontController
 
     public function postProcess()
     {
-        if($_SERVER['REQUEST_METHOD'] !== 'POST')
+        if(!isset($_SERVER['REQUEST_METHOD']) || $_SERVER['REQUEST_METHOD'] !== 'POST')
         {
             header('Content-Type: application/json');
             header('Status:', true, 400);
