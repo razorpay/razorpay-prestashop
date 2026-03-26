@@ -50,7 +50,7 @@ class Razorpay extends PaymentModule
         $this->name                   = 'razorpay';
         $this->displayName            = 'Razorpay';
         $this->tab                    = 'payments_gateways';
-        $this->version                = '2.5.7';
+        $this->version                = '2.5.8';
         $this->need_instance          = 1;
         $this->ps_versions_compliancy = ['min' => '1.7.0.0', 'max' => _PS_VERSION_];
         $this->display                = true;
@@ -177,6 +177,7 @@ class Razorpay extends PaymentModule
             'modOrderPaidEvent'             => self::ORDER_PAID,
 
             'webhookUrl'                    => $this->context->link->getModuleLink('razorpay', 'webhook', [], true),
+            'requestUri'                    => isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '',
         ]);
 
         $this->_html .= $this->fetch('module:razorpay/views/templates/admin/admin.tpl');
