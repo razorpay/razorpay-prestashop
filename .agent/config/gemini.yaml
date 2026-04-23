@@ -1,0 +1,41 @@
+# Gemini model configuration for Razorpay PrestaShop
+
+models:
+  fast:
+    id: gemini-2.0-flash
+    use_for:
+      - Quick code explanation
+      - Simple variable rename
+      - Add log message
+      - Read single file
+    temperature: 0.1
+    max_tokens: 1024
+
+  balanced:
+    id: gemini-2.0-pro
+    use_for:
+      - Debug payment or webhook issue
+      - Single-file feature addition
+      - SQL query optimization
+      - Code review of a single controller
+    temperature: 0.1
+    max_tokens: 4096
+
+  complex:
+    id: gemini-2.0-ultra
+    use_for:
+      - Multi-file feature implementation
+      - Architecture decisions
+      - Security audit
+      - PrestaShop version compatibility analysis
+    temperature: 0.2
+    max_tokens: 8192
+
+context:
+  system_prompt: |
+    You are working on the Razorpay PrestaShop payment extension (v2.5.8).
+    This is a PHP payment module for PrestaShop 1.7.0.0 to 9.0.3.
+    The main module class is Razorpay (extends PaymentModule) in razorpay/razorpay.php.
+    Always read AGENTS.md first for complete architectural context.
+    Key rule: Never skip HMAC signature verification before order creation.
+    Key rule: Never pass float amounts to Razorpay API — always use integer paise.

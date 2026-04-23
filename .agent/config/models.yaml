@@ -1,0 +1,90 @@
+# AI Model Selection Guide — Razorpay PrestaShop
+
+# Use this as a reference for selecting the right model for each task.
+
+task_model_mapping:
+
+  # Lightweight tasks — use fast/cheap models
+  trivial:
+    examples:
+      - Fix a typo in a string or comment
+      - Add a log message
+      - Change a constant value
+      - Explain what a single function does
+    recommended:
+      claude: claude-3-5-haiku-20241022
+      gemini: gemini-2.0-flash
+      kimi: moonshot-v1-8k
+      gpt: gpt-4o-mini
+
+  # Single-file changes or focused debugging
+  moderate:
+    examples:
+      - Debug a payment failure using logs
+      - Add a new webhook event handler
+      - Fix a bug in order.php or validation.php
+      - Understand the webhook wait-time mechanism
+      - Write a SQL diagnostic query
+    recommended:
+      claude: claude-3-5-sonnet-20241022
+      gemini: gemini-2.0-pro
+      kimi: moonshot-v1-32k
+      gpt: gpt-4o
+
+  # Multi-file features or significant refactors
+  complex:
+    examples:
+      - Add automated refund support across multiple files
+      - Update for new PrestaShop version compatibility
+      - Implement a new payment method variant
+      - Refactor webhook processing to support new events
+      - Write a PR with tests
+    recommended:
+      claude: claude-sonnet-4-5
+      gemini: gemini-2.0-pro
+      kimi: moonshot-v1-128k
+      gpt: gpt-4o
+
+  # Security, architecture, or full-codebase analysis
+  expert:
+    examples:
+      - Security audit of all endpoints
+      - Architecture design for subscription payments
+      - Full codebase review before major release
+      - Investigate systemic order creation failures
+    recommended:
+      claude: claude-opus-4-5
+      gemini: gemini-2.0-ultra
+      kimi: moonshot-v1-128k
+      gpt: gpt-4o
+
+# Context window requirements
+context_requirements:
+  minimal:
+    files: [AGENTS.md]
+    tokens_approx: 3000
+
+  payment_debug:
+    files:
+      - AGENTS.md
+      - razorpay/controllers/front/order.php
+      - razorpay/controllers/front/validation.php
+      - .ai/context/PAYMENT_FLOW.md
+    tokens_approx: 8000
+
+  webhook_debug:
+    files:
+      - AGENTS.md
+      - razorpay/razorpay-webhook.php
+      - .ai/context/WEBHOOK_FLOW.md
+    tokens_approx: 6000
+
+  full_codebase:
+    files:
+      - AGENTS.md
+      - razorpay/razorpay.php
+      - razorpay/razorpay-webhook.php
+      - razorpay/controllers/front/order.php
+      - razorpay/controllers/front/validation.php
+      - razorpay/script.js
+    tokens_approx: 18000

@@ -1,0 +1,34 @@
+# Kimi model configuration for Razorpay PrestaShop
+
+models:
+  fast:
+    id: moonshot-v1-8k
+    use_for:
+      - Quick code explanation
+      - Simple edits
+      - Read and summarize single file
+    max_tokens: 2048
+
+  balanced:
+    id: moonshot-v1-32k
+    use_for:
+      - Debug payment flows
+      - Single controller changes
+      - Webhook handler implementation
+    max_tokens: 8192
+
+  complex:
+    id: moonshot-v1-128k
+    use_for:
+      - Full codebase analysis
+      - Multi-file features
+      - Architecture review
+    max_tokens: 32768
+
+context:
+  system_prompt: |
+    This is the Razorpay PrestaShop payment extension v2.5.8.
+    PHP module for PrestaShop 1.7+ to 9.0.3.
+    Key files: razorpay/razorpay.php (main class), razorpay/razorpay-webhook.php (webhook handler),
+    razorpay/controllers/front/order.php (order creation), razorpay/controllers/front/validation.php (payment validation).
+    Always read AGENTS.md for the full architectural picture before making changes.
