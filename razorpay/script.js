@@ -108,6 +108,7 @@ document.addEventListener('DOMContentLoaded', function(event) {
 
   // Pay button gets clicked
   newSubmitButton.addEventListener('click', function(event) {
+    event.preventDefault();
 
     let defaults = window.razorpay_checkout_vars;
 
@@ -121,6 +122,29 @@ document.addEventListener('DOMContentLoaded', function(event) {
 
   var parent = document.querySelector('#checkout-payment-step');
 
+  // Keep the custom Razorpay button in sync with the currently selected
+  // payment method and the checkout conditions. This must also run once on
+  // page load: Razorpay may be the only payment method and already selected,
+  // while a shop may have no conditions checkbox capable of firing a change.
+  var updatePaymentButton = function() {
+    var razorpayOption = parent.querySelector(
+      'input[data-module-name="razorpay"]'
+    );
+    var selected = razorpayOption && razorpayOption.checked;
+
+    newSubmitButton.className = baseClass + (
+      selected ? 'shown' : 'not-shown'
+    );
+
+    // If there are no conditions to approve, the selector returns null and
+    // the Razorpay button remains enabled.
+    newSubmitButton.disabled = !!document.querySelector(
+      'input[name^=conditions_to_approve]:not(:checked)'
+    );
+  };
+
+  newSubmitButton.type = 'button';
+
   parent.addEventListener(
     'change',
     function(e) {
@@ -133,22 +157,11 @@ document.addEventListener('DOMContentLoaded', function(event) {
         (target.getAttribute('data-module-name') && type === 'radio') ||
         type === 'checkbox'
       ) {
-        var selected = this.querySelector('input[data-module-name="razorpay"]')
-          .checked;
-
-        if (selected) {
-          newSubmitButton.className = baseClass + 'shown';
-        } else {
-          newSubmitButton.className = baseClass + 'not-shown';
-        }
-
-        // This returns the first condition that is not checked
-        // and works as a truthy value
-        newSubmitButton.disabled = !!document.querySelector(
-          'input[name^=conditions_to_approve]:not(:checked)'
-        );
+        updatePaymentButton();
       }
     },
     true
   );
+
+  updatePaymentButton();
 });
