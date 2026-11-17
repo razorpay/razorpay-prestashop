@@ -15,16 +15,23 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
 
         $paymentId = $_REQUEST['razorpay_payment_id'];
 
+        $requestedCartId = filter_var(
+            isset($_REQUEST['cart_id']) ? $_REQUEST['cart_id'] : null,
+            FILTER_VALIDATE_INT,
+            array('options' => array('min_range' => 1))
+        );
+
         if (isset($this->context->getContext()->cart->id) === false and
-            is_numeric($_REQUEST['cart_id']) === true)
+            $requestedCartId !== false)
         {
-            $this->context->getContext()->cart = new Cart($_REQUEST['cart_id']);
+            $this->context->getContext()->cart = new Cart($requestedCartId);
             $this->context->getContext()->customer = new Customer($this->context->getContext()->cart->id_customer);
         }
 
         $cart = $this->context->cart;
 
-        if (($cart->id_customer === 0) or
+        if (!Validate::isLoadedObject($cart) or
+            ($cart->id_customer === 0) or
             ($cart->id_address_delivery === 0) or
             ($cart->id_address_invoice === 0) or
             (!$this->module->active))
@@ -80,7 +87,7 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
                 if (isset($_SESSION['rzp_order_id']) === false)
                 {
                     $db = \Db::getInstance();
-                    $request = "SELECT `rzp_order_id` FROM `razorpay_sales_order` WHERE `cart_id` = " . $_REQUEST['cart_id'];
+                    $request = "SELECT `rzp_order_id` FROM `razorpay_sales_order` WHERE `cart_id` = " . (int) $cart->id;
                     $rzp_order_id = $db->getValue($request);
                     $attributes['razorpay_order_id'] = $rzp_order_id;
                 }
@@ -142,8 +149,8 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
             //add to entry to razorpay_sales_order table
             $db = \Db::getInstance();
 
-            $request = "SELECT `entity_id` FROM `razorpay_sales_order` WHERE `cart_id` = " . $cart->id .
-                " AND `rzp_order_id` = '" . $_SESSION['rzp_order_id'] ."'";
+            $request = "SELECT `entity_id` FROM `razorpay_sales_order` WHERE `cart_id` = " . (int) $cart->id .
+                " AND `rzp_order_id` = '" . pSQL($_SESSION['rzp_order_id']) ."'";
 
             $order_sales_id = $db->getValue($request);
 
@@ -152,12 +159,12 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
             if(empty($order_sales_id) === false)
             {
                 $request =  "UPDATE `razorpay_sales_order`
-                            SET `rzp_payment_id` = '$paymentId',
+                            SET `rzp_payment_id` = '" . pSQL($paymentId) . "',
                             `amount_paid` = $amount_paid,
-                            `order_id` = " . $this->module->currentOrder . ",
+                            `order_id` = " . (int) $this->module->currentOrder . ",
                             `by_frontend` = 1,
                             `order_placed` = 1
-                            WHERE `cart_id` = " . $cart->id . " AND `entity_id` = $order_sales_id";
+                            WHERE `cart_id` = " . (int) $cart->id . " AND `entity_id` = " . (int) $order_sales_id;
 
                 $result = $db->execute($request);
 
