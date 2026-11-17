@@ -116,8 +116,14 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
             if (empty($order_sales_id) === true)
             {
                 Logger::addLog("Razorpay order does not match cart #" . (int) $cart->id, 4);
-                header('Status: 400', true, 400);
-                die($this->module->getTranslator()->trans('Payment could not be validated. Please contact the seller.', array(), 'Modules.Razorpay.Shop'));
+                $this->errors[] = $this->module->getTranslator()->trans(
+                    'Payment could not be validated. Please contact the seller.',
+                    array(),
+                    'Modules.Razorpay.Shop'
+                );
+                $checkoutUrl = $this->context->link->getPageLink('order', true);
+                $this->redirectWithNotifications($checkoutUrl);
+                exit;
             }
 
             $razorpayOrder = $api->order->fetch($_SESSION['rzp_order_id']);
@@ -128,8 +134,14 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
                 $razorpayOrder->currency !== $currency->iso_code)
             {
                 Logger::addLog("Razorpay order amount or currency does not match cart #" . (int) $cart->id, 4);
-                header('Status: 400', true, 400);
-                die($this->module->getTranslator()->trans('Payment amount does not match the cart. Please contact the seller.', array(), 'Modules.Razorpay.Shop'));
+                $this->errors[] = $this->module->getTranslator()->trans(
+                    'Payment amount does not match the cart. Please contact the seller.',
+                    array(),
+                    'Modules.Razorpay.Shop'
+                );
+                $checkoutUrl = $this->context->link->getPageLink('order', true);
+                $this->redirectWithNotifications($checkoutUrl);
+                exit;
             }
 
             $customer = new Customer($cart->id_customer);
