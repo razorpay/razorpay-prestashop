@@ -64,8 +64,6 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
 
         $currency = $this->context->currency;
 
-        $total = (string) intval($cart->getOrderTotal(true, Cart::BOTH) * 100);
-
         $api = new Api($key_id, $key_secret);
 
         $api->setAppDetails('Prestashop', $this->module->version);
@@ -79,7 +77,7 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
             {
                 session_start();
                 $attributes = array(
-                    'razorpay_order_id' => $_SESSION['rzp_order_id'],
+                    'razorpay_order_id' => isset($_SESSION['rzp_order_id']) ? $_SESSION['rzp_order_id'] : null,
                     'razorpay_payment_id' => $_REQUEST['razorpay_payment_id'],
                     'razorpay_signature' => $_POST['razorpay_signature']
                 );
@@ -90,6 +88,7 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
                     $request = "SELECT `rzp_order_id` FROM `razorpay_sales_order` WHERE `cart_id` = " . (int) $cart->id;
                     $rzp_order_id = $db->getValue($request);
                     $attributes['razorpay_order_id'] = $rzp_order_id;
+                    $_SESSION['rzp_order_id'] = $rzp_order_id;
                 }
 
                 $api->utility->verifyPaymentSignature($attributes);
@@ -105,6 +104,32 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
                 echo 'Error: '.$e->getMessage().'</br>';
 
                 exit;
+            }
+
+            // The signature proves the payment belongs to the Razorpay order, but
+            // the cart may have changed since that order was created.
+            $db = \Db::getInstance();
+            $request = "SELECT `entity_id` FROM `razorpay_sales_order` WHERE `cart_id` = " . (int) $cart->id .
+                " AND `rzp_order_id` = '" . pSQL($_SESSION['rzp_order_id']) . "'";
+            $order_sales_id = $db->getValue($request);
+
+            if (empty($order_sales_id) === true)
+            {
+                Logger::addLog("Razorpay order does not match cart #" . (int) $cart->id, 4);
+                header('Status: 400', true, 400);
+                die($this->module->getTranslator()->trans('Payment could not be validated. Please contact the seller.', array(), 'Modules.Razorpay.Shop'));
+            }
+
+            $razorpayOrder = $api->order->fetch($_SESSION['rzp_order_id']);
+            $cartAmount = (int) number_format($cart->getOrderTotal(true, Cart::BOTH) * 100, 0, '', '');
+
+            if ((int) $razorpayOrder->amount !== $cartAmount or
+                $payment->order_id !== $_SESSION['rzp_order_id'] or
+                $razorpayOrder->currency !== $currency->iso_code)
+            {
+                Logger::addLog("Razorpay order amount or currency does not match cart #" . (int) $cart->id, 4);
+                header('Status: 400', true, 400);
+                die($this->module->getTranslator()->trans('Payment amount does not match the cart. Please contact the seller.', array(), 'Modules.Razorpay.Shop'));
             }
 
             $customer = new Customer($cart->id_customer);
@@ -145,14 +170,6 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
                 false,
                 $customer->secure_key
             );
-
-            //add to entry to razorpay_sales_order table
-            $db = \Db::getInstance();
-
-            $request = "SELECT `entity_id` FROM `razorpay_sales_order` WHERE `cart_id` = " . (int) $cart->id .
-                " AND `rzp_order_id` = '" . pSQL($_SESSION['rzp_order_id']) ."'";
-
-            $order_sales_id = $db->getValue($request);
 
             $amount_paid = number_format($payment->amount/100, "2", ".", "");
 
