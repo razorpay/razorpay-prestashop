@@ -187,15 +187,21 @@ class RazorpayValidationModuleFrontController extends ModuleFrontController
 
             if(empty($order_sales_id) === false)
             {
-                $request =  "UPDATE `razorpay_sales_order`
-                            SET `rzp_payment_id` = '" . pSQL($paymentId) . "',
-                            `amount_paid` = $amount_paid,
-                            `order_id` = " . (int) $this->module->currentOrder . ",
-                            `by_frontend` = 1,
-                            `order_placed` = 1
-                            WHERE `cart_id` = " . (int) $cart->id . " AND `entity_id` = " . (int) $order_sales_id;
-
-                $result = $db->execute($request);
+                $result = $db->update(
+                    'razorpay_sales_order',
+                    array(
+                        'rzp_payment_id' => pSQL($paymentId),
+                        'amount_paid' => $amount_paid,
+                        'order_id' => (int) $this->module->currentOrder,
+                        'by_frontend' => 1,
+                        'order_placed' => 1,
+                    ),
+                    '`cart_id` = ' . (int) $cart->id . ' AND `entity_id` = ' . (int) $order_sales_id,
+                    1,
+                    false,
+                    true,
+                    false // razorpay_sales_order is created without _DB_PREFIX_.
+                );
 
                 Logger::addLog("Record inserted in razorpay_sales_order table ", 4);
             }
