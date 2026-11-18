@@ -1,0 +1,71 @@
+# Claude model configuration for Razorpay PrestaShop
+
+models:
+  fast:
+    id: claude-3-5-haiku-20241022
+    use_for:
+      - Fix typo or minor text change
+      - Add or change a log message
+      - Rename a variable or constant
+      - Read/explain a single function
+      - Simple SQL query
+    temperature: 0.1
+    max_tokens: 512
+
+  balanced:
+    id: claude-3-5-sonnet-20241022
+    use_for:
+      - Debug a payment failure (end-to-end trace)
+      - Understand webhook race condition
+      - Add a new webhook event handler
+      - Fix a single controller bug
+      - Write a DB migration
+    temperature: 0.1
+    max_tokens: 2048
+
+  capable:
+    id: claude-sonnet-4-5
+    use_for:
+      - Add a new feature spanning multiple files
+      - PrestaShop version upgrade support
+      - Refactor payment flow
+      - Write PR review
+      - Implement automated refund feature
+    temperature: 0.15
+    max_tokens: 4096
+
+  complex:
+    id: claude-opus-4-5
+    use_for:
+      - Security audit of all endpoints
+      - Architecture redesign
+      - Evaluate performance implications
+      - Complex multi-file refactor
+      - Investigate systemic order creation failures
+    temperature: 0.2
+    max_tokens: 8192
+
+context:
+  # Always include these files for full context
+  always_include:
+    - AGENTS.md
+    - razorpay/razorpay.php
+    - razorpay/razorpay-webhook.php
+
+  # Include when working on payment flow
+  payment_flow:
+    - razorpay/controllers/front/order.php
+    - razorpay/controllers/front/validation.php
+    - razorpay/script.js
+    - .ai/context/PAYMENT_FLOW.md
+
+  # Include when working on webhooks
+  webhook:
+    - razorpay/controllers/front/webhook.php
+    - razorpay/razorpay-webhook.php
+    - .ai/context/WEBHOOK_FLOW.md
+
+  # Include when working on admin/config
+  admin:
+    - razorpay/views/templates/admin/admin.tpl
+    - .ai/context/ADMIN_CONFIGURATION.md

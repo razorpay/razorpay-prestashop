@@ -1,0 +1,91 @@
+{
+  "project": {
+    "name": "razorpay-prestashop",
+    "display_name": "Razorpay Payment Extension for PrestaShop",
+    "version": "2.5.8",
+    "module_name": "razorpay",
+    "description": "Razorpay payment gateway integration for PrestaShop. Enables no-redirect Checkout modal for Cards, NetBanking, UPI, and Wallets.",
+    "author": "Team Razorpay",
+    "repository": "https://github.com/razorpay/razorpay-prestashop",
+    "support_url": "https://razorpay.com/support"
+  },
+  "technical": {
+    "language": "PHP",
+    "php_version_min": "5.6",
+    "frontend_language": "JavaScript (ES5)",
+    "framework": "PrestaShop",
+    "prestashop_version_min": "1.7.0.0",
+    "prestashop_version_max": "9.0.3",
+    "sdk": {
+      "name": "razorpay-php",
+      "version": "2.8.1",
+      "location": "razorpay/razorpay-sdk/",
+      "bundled": true
+    }
+  },
+  "architecture": {
+    "pattern": "PrestaShop PaymentModule",
+    "checkout_type": "modal_no_redirect",
+    "payment_paths": ["frontend_validation", "webhook_fallback"],
+    "database_tables": ["razorpay_sales_order"],
+    "configuration_store": "ps_configuration",
+    "hooks": ["header", "paymentOptions", "orderConfirmation", "paymentReturn"]
+  },
+  "endpoints": [
+    {
+      "path": "/razorpay/order",
+      "controller": "RazorpayOrderModuleFrontController",
+      "file": "razorpay/controllers/front/order.php",
+      "method": "POST",
+      "purpose": "Create Razorpay Order",
+      "returns": "JSON"
+    },
+    {
+      "path": "/razorpay/validation",
+      "controller": "RazorpayValidationModuleFrontController",
+      "file": "razorpay/controllers/front/validation.php",
+      "method": "POST",
+      "purpose": "Verify payment signature and create PrestaShop order",
+      "returns": "redirect"
+    },
+    {
+      "path": "/razorpay/webhook",
+      "controller": "RazorpayWebhookModuleFrontController",
+      "file": "razorpay/controllers/front/webhook.php",
+      "method": "POST",
+      "purpose": "Receive Razorpay webhook events",
+      "returns": "HTTP status code"
+    }
+  ],
+  "configuration_keys": [
+    {"key": "RAZORPAY_KEY_ID",             "type": "string",  "required": true,  "description": "Razorpay API Key ID"},
+    {"key": "RAZORPAY_KEY_SECRET",         "type": "string",  "required": true,  "description": "Razorpay API Key Secret"},
+    {"key": "RAZORPAY_PAYMENT_ACTION",     "type": "string",  "default": "capture", "values": ["capture", "authorize"]},
+    {"key": "ENABLE_RAZORPAY_WEBHOOK",     "type": "string",  "default": "off",  "values": ["on", "off"]},
+    {"key": "RAZORPAY_WEBHOOK_EVENTS",     "type": "string",  "description": "Comma-separated list of enabled webhook events"},
+    {"key": "RAZORPAY_WEBHOOK_SECRET",     "type": "string",  "description": "Auto-generated 20-char HMAC secret"},
+    {"key": "RAZORPAY_WEBHOOK_WAIT_TIME",  "type": "integer", "default": 300,    "description": "Seconds to wait before webhook creates order"},
+    {"key": "RAZORPAY_WEBHOOK_LAST_VERIFY","type": "integer", "description": "Unix timestamp of last webhook setup verification"}
+  ],
+  "webhook_events": {
+    "order.paid": {"status": "implemented", "handler": "RZP_Webhook::orderPaid"},
+    "payment.authorized": {"status": "no_op", "handler": "RZP_Webhook::paymentAuthorized"},
+    "payment.failed": {"status": "no_op", "handler": "RZP_Webhook::paymentFailed"}
+  },
+  "blocked_currencies": ["KWD", "OMR", "BHD"],
+  "key_constraints": {
+    "amount_format": "paise as integer string (number_format(total*100, 0, '', ''))",
+    "signature_required_before_order": true,
+    "duplicate_prevention": "order_placed flag in razorpay_sales_order",
+    "webhook_wait_time_seconds": 300
+  },
+  "ai_documentation": {
+    "universal_entrypoint": "AGENTS.md",
+    "claude_entrypoint": "CLAUDE.md",
+    "context_files": ".ai/context/",
+    "diagrams": ".ai/diagrams/",
+    "skills": ".agent/skills/",
+    "prompts": ".agent/prompts/",
+    "model_configs": ".agent/config/"
+  }
+}
