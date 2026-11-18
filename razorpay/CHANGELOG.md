@@ -5,6 +5,16 @@ Razorpay Prestashop Plugin Changelog
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.5.10] - 2026-11-18
+
+### Security
+- Validate cart IDs and harden SQL value handling in the payment validation callback.
+- Verify the Razorpay order amount and currency against the current cart before placing a PrestaShop order.
+
+### Changed
+- Show a checkout notification when payment validation fails.
+- Update payment records through PrestaShop's database API.
+
 ## [2.5.9] - 2026-10-30
 
 ### Fixed
